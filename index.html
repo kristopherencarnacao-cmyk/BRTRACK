@@ -405,12 +405,28 @@ function spectatorView(){
 }
 
 const app = document.getElementById('app'), shell = document.getElementById('shell');
+let lastView = '';
 function render(){
   document.querySelectorAll('[data-dev]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.dev === dev)));
   shell.classList.toggle('wide', dev === 2);
   const P = G.players[dev];
   app.classList.toggle('lefty', !!(P && P.lefty));
+  // keep scroll position and focus when re-drawing the same screen, so taps never jump the view
+  const view = dev + ':' + (dev === 2 ? 'spec' : P.screen + ':' + (P.sheet || ''));
+  const same = view === lastView;
+  const scrollTop = same ? (app.querySelector('.scroll') || {}).scrollTop : 0;
+  const sheetTop = same ? (app.querySelector('.sheet') || {}).scrollTop : 0;
+  const pageY = window.scrollY;
+  const f = document.activeElement && app.contains(document.activeElement) ? document.activeElement : null;
+  const focusSel = same && f && f.dataset.act ? `[data-act="${f.dataset.act}"]${f.dataset.arg ? `[data-arg="${f.dataset.arg}"]` : ''}` : (same && f && f.id ? '#' + f.id : null);
   app.innerHTML = dev === 2 ? spectatorView() : playerView(dev);
+  if (same) {
+    const sc = app.querySelector('.scroll'); if (sc && scrollTop) sc.scrollTop = scrollTop;
+    const sh = app.querySelector('.sheet'); if (sh && sheetTop) sh.scrollTop = sheetTop;
+    if (window.scrollY !== pageY) window.scrollTo(0, pageY);
+    if (focusSel) { const el = app.querySelector(focusSel); if (el && !el.disabled) el.focus({ preventScroll:true }); }
+  }
+  lastView = view;
   if (P && P.screen === 'round' && !wake && navigator.wakeLock) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {});
 }
 
