@@ -311,7 +311,7 @@ function playerView(i){
         + foot(stepper('CP', P.cp, '', 'cp'));
       break; }
     case 'post':
-      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<div style="min-width:0;flex:1"><div class="lbl">After battle round 5</div><h2 style="font-size:18px">End-of-game scoring</h2></div></div>${icons()}</div>`
+      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<div style="min-width:0;flex:1"><div class="lbl">After battle round 5</div><h2 style="font-size:18px;white-space:nowrap">Final scoring</h2></div></div>${icons()}</div>`
         + `<div class="scroll">
            <div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>
