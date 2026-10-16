@@ -197,7 +197,7 @@ const icons = (menu = true, P = null) => `<div style="display:flex;gap:8px">${P 
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
   <button type="button" class="minus" data-act="bump" data-arg="${key}:-1:${r}" aria-label="Remove one ${title}">−</button>
-  <div class="mid"><div style="min-width:0"><div style="font:600 15px var(--sans)"><span class="t-long">${title}</span><span class="t-short">${short}</span></div><div class="meta" style="font-size:12px">${sub}</div></div><div class="v">${value}</div></div>
+  <div class="mid"><div style="min-width:0"><div style="font:600 15px var(--sans)"><span class="t-long">${title}</span><span class="t-short">${short}</span></div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div><div class="v">${value}</div></div>
   <button type="button" class="plus" data-act="bump" data-arg="${key}:1:${r}" aria-label="Add one ${title}">+</button></div>`;
 
 // round track: past rounds open the fix-a-round sheet; on the post-game screen every round is fixable
@@ -299,7 +299,7 @@ function playerView(i){
                        : b(`End battle round ${P.round}`,'sheet', O.roundDone ? 'btn' : 'btn2','data-arg="endRound"')}
            </div></div>`
         // CP lives in the pinned footer: the most-tapped control, always in thumb reach
-        + foot(stepper('Command points', P.cp, 'Your pool', 'cp', '', 'CP'));
+        + foot(stepper('CP', P.cp, '', 'cp'));
       break; }
     case 'post':
       h = undone + bar('After battle round 5','End-of-game scoring', icons(true, P))
