@@ -97,7 +97,7 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
 /* scoreboard stays pinned while the controls scroll on short phones */
-.scroll>.board{position:sticky;top:0;z-index:2;flex:none;box-shadow:0 -16px 0 var(--bg)}
+.scroll>.board{position:sticky;top:0;z-index:2;flex:none;box-shadow:0 -10px 0 var(--bg)}
 @media (max-height:760px){.vp{font-size:min(40px,40cqi)}.side{padding:8px 12px}.trk button{min-height:44px}.scr-b button{height:46px}.stp{height:60px}.scroll{gap:10px}}
 @media (max-width:360px){.scr-b{gap:4px}.scr-b button{font-size:13px}.scr-b button:nth-child(3){margin-right:4px}.lefty .scr-b button:nth-child(3){margin-left:4px}}
 @media (max-width:350px){.t-long{display:none}.t-short{display:inline}}
@@ -282,18 +282,19 @@ function playerView(i){
       const slot = flash
         || (waiting ? `<div class="banner" role="status"><span>You’ve ended BR${P.round}. Waiting for ${nm(o)}…</span><button type="button" class="link" style="padding:0 4px;min-height:44px" data-act="unendRound">Not done</button></div>`
         : O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} has ended BR${P.round}. End yours to start ${nextLbl}.</span></div>`
-        : `<div class="lbl">Scoring this round · BR${P.round}</div>`);
-      h = undone + bar('Battle round', `${P.round} <span style="color:var(--muted);font-weight:500">of 5</span>`, icons(true, P))
+        : '');
+      // header holds actions only; the round track below is the visible round indicator
+      h = undone + `<div class="top" style="justify-content:flex-end"><h2 class="sr">Battle round ${P.round} of 5</h2>${icons(true, P)}</div>`
         + `<div class="scroll">
+           ${track(P)}
            <div class="board">
              <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>
            </div>
-           ${track(P)}
            <div class="deck">
              ${slot}
-             ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
              ${scorer('Primary', P.prim[r], `Total ${sum(P.prim)}`, 'prim')}
+             ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
              ${stepper('Command points', P.cp, 'Your pool', 'cp', '', 'CP')}
            </div></div>`
         + foot(waiting ? b(`Waiting for ${nm(o)} to end BR${P.round}…`,'noop','btn','disabled')
@@ -308,8 +309,8 @@ function playerView(i){
            <div class="deck">
              ${flash || '<div class="lbl">Tap a round to fix it</div>'}
              ${track(P, true)}
-             ${scorer('Secondary', P.postS, 'End of game', 'postS')}
              ${scorer('Primary', P.postP, 'End of game', 'postP')}
+             ${scorer('Secondary', P.postS, 'End of game', 'postS')}
            </div></div>`
         + foot(b('Finish game','finish'));
       break;
@@ -373,7 +374,7 @@ function playerView(i){
     case 'edit': {
       const e = P.editRound - 1;
       h += sheet(`<div class="lbl">Fix a past round</div><h2>Battle round ${P.editRound}</h2>
-        <div class="deck" style="margin-top:0">${scorer('Secondary', P.sec[e], `BR${P.editRound}`, 'sec', P.editRound)}${scorer('Primary', P.prim[e], `BR${P.editRound}`, 'prim', P.editRound)}</div>
+        <div class="deck" style="margin-top:0">${scorer('Primary', P.prim[e], `BR${P.editRound}`, 'prim', P.editRound)}${scorer('Secondary', P.sec[e], `BR${P.editRound}`, 'sec', P.editRound)}</div>
         <p style="font-size:13px">Changes sync to your opponent straight away.</p>${b('Done','closeSheet')}`); break; }
   }
   if (G.restartReq === o && P.screen !== 'expired')
