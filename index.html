@@ -295,10 +295,11 @@ function playerView(i){
              ${slot}
              ${scorer('Primary', P.prim[r], `Total ${sum(P.prim)}`, 'prim')}
              ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
-             ${stepper('Command points', P.cp, 'Your pool', 'cp', '', 'CP')}
+             ${waiting ? b(`Waiting for ${nm(o)} to end BR${P.round}…`,'noop','btn','disabled')
+                       : b(`End battle round ${P.round}`,'sheet', O.roundDone ? 'btn' : 'btn2','data-arg="endRound"')}
            </div></div>`
-        + foot(waiting ? b(`Waiting for ${nm(o)} to end BR${P.round}…`,'noop','btn','disabled')
-                       : b(`End battle round ${P.round}`,'sheet', O.roundDone ? 'btn' : 'btn2','data-arg="endRound"'));
+        // CP lives in the pinned footer: the most-tapped control, always in thumb reach
+        + foot(stepper('Command points', P.cp, 'Your pool', 'cp', '', 'CP'));
       break; }
     case 'post':
       h = undone + bar('After battle round 5','End-of-game scoring', icons(true, P))
@@ -364,13 +365,13 @@ function playerView(i){
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
     case 'endRound': {
       const last = P.round === 5, next = last ? 'end-of-game scoring' : `battle round ${P.round + 1}`;
-      h += sheet(`<div class="lbl">End battle round ${P.round}</div><h2>Lock in your BR${P.round} score?</h2>
+      h += sheet(`<div class="lbl">End battle round ${P.round}</div><h2>Are you sure you want to end battle round ${P.round}?</h2>
         <div class="card" style="display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;justify-content:space-between"><span class="meta">Primary</span><strong>${signed(P.prim[r])}</strong></div>
           <div style="display:flex;justify-content:space-between"><span class="meta">Secondary</span><strong>${signed(P.sec[r])}</strong></div>
           <div style="display:flex;justify-content:space-between"><span class="meta">Round total</span><strong>${signed(roundPts(P, r))}</strong></div></div>
         <p style="font-size:13px">${O.roundDone ? `${nm(o)} is ready, so ${next} starts as soon as you confirm.` : `Both players move to ${next} together, once ${nm(o)} ends BR${P.round} too.`} You can still fix this round later from the round track.</p>
-        ${b('Keep scoring','closeSheet','btn2')}${b(`End my battle round ${P.round}`,'endRound')}`); break; }
+        ${b('Cancel','closeSheet','btn2')}${b(`Yes, end battle round ${P.round}`,'endRound')}`); break; }
     case 'edit': {
       const e = P.editRound - 1;
       h += sheet(`<div class="lbl">Fix a past round</div><h2>Battle round ${P.editRound}</h2>
