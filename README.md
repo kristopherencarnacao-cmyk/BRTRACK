@@ -12,9 +12,11 @@ To host it, enable **GitHub Pages** for this repo (Settings → Pages → deploy
 
 ## Using the prototype
 
-- **Player 1 / Player 2 / Spectator tabs** switch between the three simulated devices. They share one live game.
-- **Skip to BR1** jumps straight to battle round 1 with both lists confirmed (a development shortcut).
-- **Reset prototype** starts over.
+The compact row above the phone holds the dev-only controls:
+
+- **P1 / P2 / Spectator** switch between the three simulated devices. They share one live game.
+- **Skip to BR1** jumps straight to battle round 1 with both lists confirmed.
+- **Reset** starts over.
 - Blue dashed **Prototype** boxes stand in for things a real backend would do, such as scanning a QR code or the other player responding.
 
 ## What's covered
