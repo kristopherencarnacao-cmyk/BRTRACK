@@ -64,7 +64,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .err{color:var(--ink);background:var(--fill);border-radius:8px;padding:10px 12px;font:500 13px var(--sans);text-align:left}
 .banner{border:1.5px dashed var(--line);border-radius:10px;padding:10px 12px;font:500 13px var(--sans);display:flex;justify-content:space-between;align-items:center;gap:8px}
 .num{font:600 24px var(--mono);font-variant-numeric:tabular-nums}
-.icon{width:48px;height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon{width:44px;height:44px;flex:none;border-radius:10px;border:none;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon:not(:disabled):hover,.icon:not(:disabled):active{background:var(--fill)}
+.top.tight{padding:4px 6px}
 
 /* segmented choice */
 .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
@@ -112,7 +114,7 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .scr-b button.add{background:var(--ink);color:var(--on-ink)}
 .scr-b button:nth-child(3){margin-right:6px}
 .lefty .scr-b button:nth-child(3){margin-right:0;margin-left:6px}
-.icon:disabled{border-color:var(--soft);color:var(--soft);cursor:not-allowed}
+.icon:disabled{color:var(--soft);cursor:not-allowed}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .overlay{position:absolute;inset:0;background:var(--scrim);display:flex;flex-direction:column;justify-content:flex-end;z-index:10}
@@ -200,7 +202,7 @@ const UNDO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke
 // undo: pass the player to show it; disabled when there is nothing this round to undo
 const undoBtn = P => { const L = P.history[P.history.length - 1];
   return `<button type="button" class="icon" data-act="undo" ${L ? `aria-label="Undo ${LABEL[L.key]} ${signed(L.d)}" title="Undo ${LABEL[L.key]} ${signed(L.d)}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}</button>`; };
-const icons = (menu = true, P = null) => `<div style="display:flex;gap:8px">${P ? undoBtn(P) : ''}<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
+const icons = (menu = true) => `<div style="display:flex;gap:2px"><button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
   <button type="button" class="minus" data-act="bump" data-arg="${key}:-1:${r}" aria-label="Remove one ${title}">−</button>
@@ -291,7 +293,7 @@ function playerView(i){
         : O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} has ended BR${P.round}. End yours to start ${nextLbl}.</span></div>`
         : '');
       // header holds actions only; the round track below is the visible round indicator
-      h = undone + `<div class="top" style="justify-content:flex-end"><h2 class="sr">Battle round ${P.round} of 5</h2>${icons(true, P)}</div>`
+      h = undone + `<div class="top tight">${undoBtn(P)}<h2 class="sr">Battle round ${P.round} of 5</h2>${icons()}</div>`
         + `<div class="scroll">
            ${track(P)}
            <div class="board">
@@ -309,7 +311,7 @@ function playerView(i){
         + foot(stepper('CP', P.cp, '', 'cp'));
       break; }
     case 'post':
-      h = undone + bar('After battle round 5','End-of-game scoring', icons(true, P))
+      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<div style="min-width:0;flex:1"><div class="lbl">After battle round 5</div><h2 style="font-size:18px">End-of-game scoring</h2></div></div>${icons()}</div>`
         + `<div class="scroll">
            <div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>
