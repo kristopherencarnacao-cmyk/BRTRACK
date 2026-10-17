@@ -109,10 +109,15 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .t-short{display:none}
 /* batch strip: bottom of the scoreboard, divided from the score by a light line */
 .bstrip{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:12px;padding:6px 10px 8px 16px;border-top:1px solid var(--soft)}
-.uplink{grid-column:1/-1;height:13px;font:700 10px/13px var(--mono);letter-spacing:.14em;color:var(--accent);white-space:nowrap;overflow:hidden}
-.uplink span{display:inline-block;animation:uplink 1.6s ease-in-out infinite}
+.bmeter{container-type:inline-size}
+/* point change on the left, uplink text on the same line, right edge flush with the timer bar */
+.brow{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
+.uplink{flex:none;font:700 10px/1 var(--mono);letter-spacing:.06em;color:var(--accent);white-space:nowrap;text-align:right}
+.up-short{display:none}
+@container (max-width:219px){.up-long{display:none}.up-short{display:inline}}
+.uplink>span{display:inline-block;animation:uplink 1.6s ease-in-out infinite}
 @keyframes uplink{0%,100%{opacity:.15}50%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.uplink span{animation:none;opacity:.8}}
+@media (prefers-reduced-motion:reduce){.uplink>span{animation:none;opacity:.8}}
 .board:not(.solo) .bstrip{grid-column:1/-1}
 .board{grid-template-rows:minmax(0,1fr) auto}   /* spare height goes to the score, never the strip */
 .bmeter{min-width:0;display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
@@ -606,8 +611,9 @@ const vpPend = P => { const n = pendItems(P).reduce((a, it) => a + it.d, 0); ret
 // one countdown for the whole batch, at the bottom of the scoreboard: running total above the bar, Undo beside it
 const bstrip = P => { const n = pendItems(P).reduce((a, it) => a + it.d, 0), left = pendLeft(P);
   // the uplink line pulses while a batch is pending; its fade is phase-locked to the clock so re-draws don't restart it
-  return `<div class="bstrip"><div class="uplink" aria-hidden="true">${P.pend ? `<span style="animation-delay:-${Date.now() % 1600}ms">++ ESTABLISHING UPLINK ++</span>` : ''}</div>
-    <div class="bmeter"><div class="bsum${n < 0 ? ' neg' : ''}" aria-live="polite">${n ? signed(n) : ''}</div>
+  return `<div class="bstrip">
+    <div class="bmeter"><div class="brow"><div class="bsum${n < 0 ? ' neg' : ''}" aria-live="polite">${n ? signed(n) : ''}</div>
+      <div class="uplink" aria-hidden="true">${P.pend ? `<span style="animation-delay:-${Date.now() % 1600}ms"><span class="up-long">++ ESTABLISHING UPLINK ++</span><span class="up-short">++ UPLINK ++</span></span>` : ''}</div></div>
     <div class="tbar${P.pend ? ' on' : ''}" aria-hidden="true">${P.pend ? `<i style="animation-duration:${BATCH_MS}ms;animation-delay:-${BATCH_MS - left}ms"></i>` : ''}</div></div>${undoBtn(P)}</div>`; };
 let VIEWP = null;   // the player whose screen is being drawn (scorer reads pending points from it)
 
