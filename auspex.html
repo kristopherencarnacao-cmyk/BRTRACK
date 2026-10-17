@@ -425,7 +425,10 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 .board.solo .stat{flex-direction:row;align-items:baseline;justify-content:space-between;gap:14px;padding:4px 0;border-bottom:1px dashed var(--soft)}
 .board.solo .stat .big{font:700 28px/1 var(--mono);min-width:2ch;text-align:right}
 .board.solo .undo{align-self:flex-end}
-.scroll>.board.solo .vp{font-size:clamp(44px,min(calc(100cqh - 64px),calc((100cqw - 150px) / 1.85)),160px)}
+/* equal breathing room: 16px on every side of the score block, so the number never touches the frame or the strip divider.
+   Font size = board height minus the strip (51), label + gap (17) and padding (32), so the number always fits inside that padding */
+.board.solo .side.sb{padding:16px}
+.scroll>.board.solo .vp{font-size:clamp(34px,min(calc(100cqh - 100px),calc((100cqw - 150px) / 1.85)),160px)}
 
 /* short screens (an iPhone SE or a phone browser with its toolbars): tighten the controls so a round fits without scrolling */
 @media (max-height:720px){
@@ -437,7 +440,7 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .scr-b button{height:42px}
   .deck .btn,.deck .btn2{min-height:44px}
   .foot{padding:8px 16px 10px}
-  .scroll>.board.solo{min-height:140px}
+  .scroll>.board.solo{min-height:150px}
   .board.solo .stat .big{font-size:24px}
   .scroll>.board:not(.solo){min-height:140px}
 }
@@ -449,7 +452,7 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .scr-b button{height:38px;font-size:14px}
   .deck .btn,.deck .btn2{min-height:40px}
   .scroll{gap:4px}.deck{gap:4px}.trk button{min-height:32px}.scr-b button{height:36px}.foot{padding:6px 16px 8px}
-  .scroll>.board.solo{min-height:124px}
+  .scroll>.board.solo{min-height:134px}
   .board.solo .stat{padding:2px 0}.board.solo .stat .big{font-size:20px}.board.solo .sb-aside{gap:2px}.board.solo .undo{height:30px}
   .scroll>.board:not(.solo){min-height:128px}
   .board:not(.solo) .meta{font-size:12px}
