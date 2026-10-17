@@ -419,7 +419,7 @@ const SLIDES = [
 ];
 
 // single mode: one big personal scoreboard, no opponent
-const soloBoard = P => `<div class="board solo"><div class="side"><span class="lbl">Your score</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div></div>`;
+const soloBoard = P => `<div class="board solo"><div class="side"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div></div>`;   // CP lives only in the footer bar
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];

@@ -30,7 +30,7 @@ The dev-only controls are hidden by default. Add `#dev` to the end of the URL (f
 Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 
 - **How it works:** a single page with a simple diagram explaining solo scoring (VP, +1–5 buttons, round track, CP). It opens only from "How it works" on the start screen.
-- **Single mode:** a third option on the start screen for tracking just your own score. It skips setup and connecting and goes straight to battle round 1, with a single scoreboard (your VP and CP), no opponent, no spectators, and no ready syncing: End battle round advances immediately. The menu offers Start over and Exit to start, and results show your own round-by-round breakdown.
+- **Single mode:** a third option on the start screen for tracking just your own score. It skips setup and connecting and goes straight to battle round 1, with a single scoreboard showing your VP (CP stays in the footer bar), no opponent, no spectators, and no ready syncing: End battle round advances immediately. The menu offers Start over and Exit to start, and results show your own round-by-round breakdown.
 - **Two-player mode (hidden for now):** Host and Join are only shown with `#dev` in the URL while the app focuses on single mode. Everything below still works there.
 - **Connect:** host shows a QR code and room code; opponent scans or types the code. Wrong or missing codes show a "room not found" error.
 - **Setup (1 step):** your army (name required; army, up to three detachments and disposition optional), then tap Ready. Battle round 1 starts as soon as both players are ready; tap again to undo while waiting.
