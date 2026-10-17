@@ -727,7 +727,7 @@ const undoBtn = P => { const L = P.pend ? { items:pendItems(P), pending:true } :
   const lbl = L ? `Undo ${L.pending ? 'pending ' : ''}${describe(L)}` : '';
   return `<button type="button" class="undo" data-act="undo" ${L ? `aria-label="${lbl}" title="${lbl}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}<span aria-hidden="true">Undo</span></button>`; };
 // the app title, styled and animated like PhosphorDice's; tapping it sets off the cable spark
-const brand = `<div class="brand" aria-hidden="true">BrTRACKER<span class="cursor"></span></div>`;
+const brand = `<div class="brand" aria-hidden="true">BrTRACK<span class="cursor"></span></div>`;
 const icons = (menu = true) => `<div style="display:flex;gap:2px">${G.solo === null ? `<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>` : ''}${menu ? `<button type="button" class="mbtn" data-act="${VIEWP && VIEWP.sheet === 'menu' ? 'closeSheet' : 'sheet'}" data-arg="menu" aria-haspopup="true" aria-expanded="${!!(VIEWP && VIEWP.sheet === 'menu')}"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>Menu</button>` : ''}</div>`;
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
@@ -810,7 +810,7 @@ function playerView(i){
         + foot(`<div style="display:flex;gap:8px">${k ? b('Back','obBack','btn2','style="flex:1"') : ''}${b(last ? 'Get started' : 'Next', last ? 'obDone' : 'obNext','btn','style="flex:2"')}</div>`);
       break; }
     case 'start':
-      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px;text-transform:none">BrTRACKER</h1><p class="hint">Track your score · round by round</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
+      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px;text-transform:none">BrTRACK</h1><p class="hint">Track your score · round by round</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
         + foot(b('Single mode','solo'), ...(document.body.classList.contains('dev') ? [b('Host a game','host','btn2'), b('Join a game','join','btn2')] : []))   // two-player mode is dev-only for now;
       break;
     case 'host':
