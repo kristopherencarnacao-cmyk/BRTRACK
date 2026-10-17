@@ -11,7 +11,7 @@ img{max-width:100%}
 [hidden]{display:none!important}
 </style>
 <title>ScoreHammer Auspex</title>
-<script>try{var t=localStorage.getItem('scorehammer:theme');if(t&&t!=='green')document.documentElement.setAttribute('data-accent',t)}catch(e){}</script>
+<script>try{var t=localStorage.getItem('scorehammer:theme');if(t&&t!=='green')document.documentElement.setAttribute('data-accent',t);if(localStorage.getItem('scorehammer:optimatus')==='1')document.documentElement.classList.add('opt')}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: phone frame with a pinned footer; info at the top (glance zone), frequent controls at the bottom (thumb zone). Spectator renders wide. */
@@ -567,6 +567,33 @@ html[data-accent="orange"]{--accent:#ff8f3f;--seal-hi:#ffbd8a;--phos-deep:#c25a1
 .m-item input[type=checkbox]:checked{background:linear-gradient(155deg,var(--seal-hi),var(--accent) 60%,var(--phos-deep));border-color:var(--seal-hi);box-shadow:0 0 10px var(--glow)}
 .m-item input[type=checkbox]:checked::after{content:"";width:12px;height:12px;background:var(--on-ink);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
 @media (prefers-reduced-motion:reduce){.menu.enter{animation:none}.sw{transition:none}}
+
+/* theme row: Optimatus checkbox sits under the swatches */
+.opt-row{padding:10px 0 2px;min-height:44px}
+.opt-row>span{display:flex;flex-direction:column;gap:4px}
+.opt-sub{font:400 10px/1.3 var(--term);letter-spacing:.06em;color:var(--muted)}
+.sw:disabled{opacity:.3;cursor:not-allowed;transform:none}
+
+/* ===== OPTIMATUS: a very basic dark mode. Pure black, white text, greys for containers.
+   No scanlines, sweep, glass, flicker, sparks, glows, brackets, cursor or entrance animations.
+   Only the timers keep moving (the score delay bar). Gold (CP, MAX 15) and red (danger) keep their meaning */
+html.opt{--bg:#000;--surface:#111;--fill:#1c1c1c;--ink:#fff;--muted:#9a9a9a;--line:#3a3a3a;--soft:#262626;
+  --accent:#fff;--accent-soft:#1f1f1f;--on-ink:#000;--seal-hi:#fff;--phos-deep:#cfcfcf;--rgb:255,255,255;--rgb-hi:255,255,255;
+  --glow:transparent;--glow-soft:transparent;--gold-glow:transparent;--scrim:rgba(0,0,0,.85)}
+html.opt *,html.opt *::before,html.opt *::after{animation-name:none!important;transition:none!important;text-shadow:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important}
+html.opt body{background-image:none!important}
+html.opt body::before,html.opt body::after,html.opt .crt-band,html.opt .crt-glass,html.opt .brand .cursor,html.opt h1::after{display:none!important}
+html.opt .card,html.opt .board,html.opt .scr,html.opt .cpmid,html.opt .sheet,html.opt .phone,html.opt .menu{--fr:transparent;--bk:0px}
+html.opt .card,html.opt .board,html.opt .scr,html.opt .sheet,html.opt .menu{background:var(--surface)!important}
+html.opt .uplink>span{opacity:1}
+/* timers keep running */
+html.opt .tbar i{animation-name:pfill!important}
+html.opt .pbar i{animation-name:pdrain!important}
+/* toasts still go away on their own, without moving */
+html.opt .toastov{animation-name:toastplain!important;transform:translateX(-50%)}
+@keyframes toastplain{0%,99%{opacity:1}100%{opacity:0}}
+html.opt .sw[aria-pressed="true"]{border-color:var(--c)}
+html.opt .m-item input[type=checkbox]:checked{background:#fff;border-color:#fff}
 </style>
 </head>
 <body>
@@ -598,9 +625,11 @@ const BATCH_KEY = 'scorehammer:batchMs', BATCH_OPTS = [[0,'Instant'],[3000,'3s']
 try { const v = +localStorage.getItem(BATCH_KEY); if (BATCH_OPTS.some(([ms]) => ms === v) && localStorage.getItem(BATCH_KEY) !== null) BATCH_MS = v; } catch (e) {}
 // accent themes (PhosphorDice): saved per device, applied before first paint by the script after <title>
 const THEME_KEY = 'scorehammer:theme', THEMES = [['green','#55e6a5'],['cyan','#4fd8ff'],['blue','#7a96ff'],['violet','#b685ff'],['magenta','#ff63d4'],['orange','#ff8f3f']];
+const OPT_KEY = 'scorehammer:optimatus', OPT = () => document.documentElement.classList.contains('opt');
 const curTheme = () => document.documentElement.getAttribute('data-accent') || 'green';
 const themeRow = () => `<div class="m-row"><span class="lbl">Theme</span><div class="swatches" role="group" aria-label="Theme">${THEMES.map(([t, c]) =>
-  `<button type="button" class="sw" style="--c:${c}" data-act="setTheme" data-arg="${t}" aria-label="${t} theme" aria-pressed="${curTheme() === t}"></button>`).join('')}</div></div>`;
+  `<button type="button" class="sw" style="--c:${c}" data-act="setTheme" data-arg="${t}" aria-label="${t} theme" aria-pressed="${curTheme() === t}" ${OPT() ? 'disabled' : ''}></button>`).join('')}</div>
+  <label class="m-item opt-row" for="optimatus"><span>Optimatus<span class="opt-sub">Plain black and white · no effects</span></span><input type="checkbox" id="optimatus" data-act="toggleOpt" ${OPT() ? 'checked' : ''}></label></div>`;
 const mItem = (label, act, arg = '', cls = '', val = '') => `<button type="button" class="m-item ${cls}" role="menuitem" data-act="${act}" ${arg ? `data-arg="${arg}"` : ''}><span>${label}</span>${val ? `<span class="mv">${val}</span>` : ''}</button>`;
 // the menu hangs from the header button as a bracketed dropdown; a transparent layer behind it closes it on any outside tap
 const menuDrop = (P, i) => `<div class="menuov" data-act="closeSheet"></div><div class="menu card" data-stop role="menu" aria-label="Menu">
@@ -1048,6 +1077,9 @@ function act(a, arg){
     case 'unready': P.ready = false; break;
     case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
     case 'commitNow': break;   // committed above
+    case 'toggleOpt': {   // Optimatus: plain black-and-white palette, every effect off except the timers
+      const on = !OPT(); document.documentElement.classList.toggle('opt', on);
+      try { localStorage.setItem(OPT_KEY, on ? '1' : '0'); } catch (e) {} break; }
     case 'setTheme':
       if (arg === 'green') document.documentElement.removeAttribute('data-accent'); else document.documentElement.setAttribute('data-accent', arg);
       try { localStorage.setItem(THEME_KEY, arg); } catch (e) {} break;
@@ -1202,7 +1234,7 @@ const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // random CRT flicker roughly once a minute (45–75 s apart), skipped when the tab is hidden or motion is reduced
 let flickT = null;
 function flicker(fast){
-  if (REDUCE || document.hidden) return;
+  if (REDUCE || document.hidden || OPT()) return;
   const b = document.body; clearTimeout(flickT); b.classList.remove('flicker','fast'); void b.offsetWidth;
   b.classList.toggle('fast', !!fast); b.classList.add('flicker');
   flickT = setTimeout(() => b.classList.remove('flicker','fast'), fast ? 400 : 750);
@@ -1218,7 +1250,7 @@ new MutationObserver(() => {
 
 // sparking cable reflected on the glass: once in the first 15 s, then every 1–2 minutes
 function cableSpark(){
-  if (REDUCE || document.hidden) return;
+  if (REDUCE || document.hidden || OPT()) return;
   const glass = document.querySelector('.crt-glass'); if (!glass) return;
   const fx = document.createElement('div'); fx.className = 'arc';
   // the cable hangs in front of the top-right of the screen

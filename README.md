@@ -44,7 +44,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
   - **Synced rounds:** tapping End battle round puts you in a Ready state (tap again to undo). The next round starts automatically as soon as both players are ready; there's no confirmation step.
   - **Concede:** in the menu during battle rounds. A confirmation sheet keeps the Yes button locked for a 5-second countdown; conceding ends the game for both players and goes to results.
 - **End of game:** end-of-game scoring, then a results screen with a round-by-round breakdown.
-- **Menu:** a bracketed dropdown under the header's MENU button with Theme (six accent colours: green, cyan, blue, violet, magenta, orange, saved per device), Score delay, Left-handed, and Start over / Exit (single mode) or invite spectators, restart, concede and leave (two-player). Tap outside, the MENU button or Escape to close.
+- **Menu:** a bracketed dropdown under the header's MENU button with Theme (six accent colours: green, cyan, blue, violet, magenta, orange, saved per device), Score delay, Left-handed, and Start over / Exit (single mode) or invite spectators, restart, concede and leave (two-player). Tap outside, the MENU button or Escape to close. Under Theme, the **Optimatus** checkbox switches to a very basic dark mode (pure black, white text, grey containers) and turns off every effect and animation except the score delay timer; gold CP, MAX 15 and red warnings keep their colours. It's saved per device.
 - **Spectator:** read-only live scoreboard. When the game ends, a 5:00 countdown runs, then the link expires.
 
 ## Design notes
