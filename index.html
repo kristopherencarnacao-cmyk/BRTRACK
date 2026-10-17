@@ -202,7 +202,6 @@ const clock = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 6
 const signed = n => (n > 0 ? '+' : '') + n;
 function status(p){
   if (['start','host','join','connected','setup'].includes(p.screen)) return 'Setting up army';
-  if (p.screen === 'confirm') return p.confirmed ? 'List confirmed' : 'Reviewing lists';
   if (p.screen === 'battle') return p.ready ? 'Ready' : 'Choosing roles';
   if (p.screen === 'post') return 'End-game scoring';
   if (p.screen === 'results') return 'Finished';
@@ -276,7 +275,7 @@ function playerView(i){
       break;
     case 'setup': {
       const ok = !!P.name.trim();
-      h = bar('Step 1 of 3','Your army', icons())
+      h = bar('Step 1 of 2','Your army', icons())
         + `<div class="scroll">
            <div class="fld"><label for="name${i}">Player name</label><input id="name${i}" data-field="name" value="${esc(P.name)}" placeholder="Your name" autocomplete="off"></div>
            <div class="fld"><label for="army${i}">Army <span class="opt-tag">optional</span></label><input id="army${i}" data-field="army" value="${esc(P.army)}" placeholder="e.g. Space Marines" autocomplete="off"></div>
@@ -285,21 +284,11 @@ function playerView(i){
            ${P.detCount > 2 ? `<div class="fld"><label for="d3${i}">Third detachment <span class="opt-tag">optional</span></label><input id="d3${i}" data-field="det3" value="${esc(P.det3)}" placeholder="Detachment name" autocomplete="off"></div>` : ''}
            ${P.detCount < 3 ? `<button type="button" class="link" data-act="addDet">+ Add another detachment</button>` : ''}
            <div class="fld"><label for="disp${i}">Disposition <span class="opt-tag">optional</span></label><input id="disp${i}" data-field="disp" value="${esc(P.disp)}" placeholder="Disposition name" autocomplete="off"></div></div>`
-        + foot(b('Review lists','toConfirm','btn',`id="setupNext" ${ok ? '' : 'disabled'}`));
-      break; }
-    case 'confirm': {
-      const oppSeen = O.confirmed || O.screen === 'confirm';
-      h = bar('Step 2 of 3','Check both lists', icons(), 'edit')
-        + `<div class="scroll">
-           <div class="card"><div class="row" style="display:flex;justify-content:space-between"><span class="lbl">You</span><button type="button" class="link" style="padding:0;min-height:32px" data-act="edit">Edit</button></div>
-             <div style="font:700 19px var(--sans)">${nm(i)}</div><p>${listInfo(P)}</p></div>
-           <div class="card"><div class="lbl">Opponent · ${O.confirmed ? 'confirmed' : oppSeen ? 'reviewing' : 'still setting up'}</div>
-           ${oppSeen ? `<div style="font:700 19px var(--sans);margin-top:4px">${nm(o)}</div><p>${listInfo(O)}</p>` : `<p style="margin-top:6px">Their list appears here once they finish setup.</p>`}</div></div>`
-        + foot(b('Lists look right','confirm'));
+        + foot(b('Continue','confirm','btn',`id="setupNext" ${ok ? '' : 'disabled'}`));
       break; }
     case 'battle': {
       const set = G.attacker !== null && G.first !== null;
-      h = bar('Step 3 of 3','Roles and first turn', icons(), 'backToLists')
+      h = bar('Step 2 of 2','Roles and first turn', icons(), 'edit')
         + `<div class="scroll">
            <div class="fld"><span class="lbl">Attacker and defender</span><p style="font-size:13px">Each player rolls a D6. The highest roller decides who attacks. Pick your role:</p><div class="seg" role="group" aria-label="Your role"><button type="button" data-act="side" data-arg="att" aria-pressed="${G.attacker === i}">Attacker</button><button type="button" data-act="side" data-arg="def" aria-pressed="${G.attacker === o}">Defender</button></div></div>
            <div class="fld"><span class="lbl">First turn</span><p style="font-size:13px">Each player rolls a D6. The highest roller must go first. Who won?</p><div class="seg" role="group" aria-label="First turn roll-off winner"><button type="button" data-act="first" data-arg="me" aria-pressed="${G.first === i}">I won</button><button type="button" data-act="first" data-arg="opp" aria-pressed="${G.first === o}">Opponent won</button></div></div>
@@ -309,7 +298,7 @@ function playerView(i){
              <div style="display:flex;justify-content:space-between"><span class="meta">Attacker</span><strong>${nm(G.attacker)}</strong></div>
              <div style="display:flex;justify-content:space-between"><span class="meta">Defender</span><strong>${nm(1 - G.attacker)}</strong></div>
              <div style="display:flex;justify-content:space-between"><span class="meta">First turn</span><strong>${nm(G.first)}</strong></div></div>` : ''}</div>`
-        + foot(`<div class="meta">${nm(o)}: ${O.ready ? 'ready' : O.screen === 'battle' ? 'choosing roles' : 'still checking lists'}</div>`, b(P.ready ? 'Waiting for opponent…' : 'Ready — start battle round 1','ready','btn', (!set || P.ready) ? 'disabled' : ''));
+        + foot(`<div class="meta">${nm(o)}: ${O.ready ? 'ready' : O.screen === 'battle' ? 'choosing roles' : 'still setting up their army'}</div>`, b(P.ready ? 'Waiting for opponent…' : 'Ready — start battle round 1','ready','btn', (!set || P.ready) ? 'disabled' : ''));
       break; }
     case 'round': {
       const r = P.round - 1, waiting = P.roundDone, nextLbl = P.round < 5 ? `BR${P.round + 1}` : 'end-of-game scoring';
@@ -484,10 +473,8 @@ function act(a, arg){
       if (G.host === null || G.host === i) { P.joinErr = 'No game is open yet. Switch to the other player and tap Host a game first.'; break; }
       G.connected = true; both('connected'); break;
     case 'addDet': P.detCount = Math.min(3, P.detCount + 1); break;
-    case 'toConfirm': P.screen = 'confirm'; break;
     case 'confirm': P.confirmed = true; P.screen = 'battle'; break;   // each player moves on without waiting
     case 'edit': P.confirmed = false; P.ready = false; P.screen = 'setup'; break;
-    case 'backToLists': P.ready = false; P.screen = 'confirm'; break;
     case 'side': G.attacker = arg === 'att' ? i : o; G.players.forEach(p => p.ready = false); break;
     case 'first': G.first = arg === 'me' ? i : o; G.players.forEach(p => p.ready = false); break;
     case 'ready': P.ready = true; if (O.ready) both('round'); break;
