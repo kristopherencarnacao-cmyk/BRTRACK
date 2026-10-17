@@ -24,6 +24,7 @@ The compact row above the phone holds the dev-only controls:
 
 Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 
+- **Onboarding:** four short cards with simple diagrams (two phones, live scoring, synced rounds, spectators) on first launch. Swipe or tap Next, Skip any time, and replay from "How it works" on the start screen. Reset shows it again.
 - **Connect:** host shows a QR code and room code; opponent scans or types the code. Wrong or missing codes show a "room not found" error.
 - **Setup (2 steps):** your army (name required; army, up to three detachments and disposition optional), then roles and first turn. Each player moves at their own pace and can go back to edit; attacker/defender and first turn are shared, and battle round 1 starts once both players are ready.
 - **Battle rounds 1–5:**
