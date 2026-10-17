@@ -60,6 +60,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .proto button{min-height:44px;border-color:var(--accent);background:var(--surface);color:var(--accent);font-size:14px}
 .fld{display:flex;flex-direction:column;gap:6px;text-align:left}
 .fld label{font:500 13px var(--sans)}
+.opt-tag{font-weight:400;color:var(--muted)}
 .fld input,.fld select{height:50px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font:16px var(--sans);background:var(--surface);color:var(--ink);width:100%}
 .err{color:var(--ink);background:var(--fill);border-radius:8px;padding:10px 12px;font:500 13px var(--sans);text-align:left}
 .banner{border:1.5px dashed var(--line);border-radius:10px;padding:10px 12px;font:500 13px var(--sans);display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -181,7 +182,13 @@ const sum = a => a.reduce((x, y) => x + y, 0);
 const total = p => sum(p.prim) + sum(p.sec) + p.postP + p.postS;
 const roundPts = (p, r) => p.prim[r] + p.sec[r];
 const nm = i => esc(G.players[i].name.trim() || `Player ${i + 1}`);
-const dets = p => [p.det1, p.det2, p.det3].filter(Boolean).join(' + ') || '[Detachment]';
+const dets = p => [p.det1, p.det2, p.det3].filter(Boolean).join(' + ');
+// army details are optional: show only what was entered, else a quiet fallback
+const listInfo = (p, compact = false) => {
+  const parts = compact ? [p.army, p.disp] : [[p.army, dets(p)].filter(Boolean).join(' · '), p.disp ? 'Disposition: ' + p.disp : ''];
+  const shown = parts.filter(Boolean).map(esc);
+  return shown.length ? shown.join('<br>') : 'No army details added';
+};
 const remaining = () => G.endedAt ? Math.max(0, TIMER_MS - (Date.now() - G.endedAt)) : TIMER_MS;
 const clock = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 const signed = n => (n > 0 ? '+' : '') + n;
@@ -250,16 +257,16 @@ function playerView(i){
            <h2>Connected</h2><p>You’re linked with Player ${o + 1}’s device.</p></div>` + foot(b('Set up my army','go','btn','data-arg="setup"'));
       break;
     case 'setup': {
-      const ok = P.name.trim() && P.army && P.det1 && P.disp;
+      const ok = !!P.name.trim();
       h = bar('Step 1 of 3','Your army', icons())
         + `<div class="scroll">
            <div class="fld"><label for="name${i}">Player name</label><input id="name${i}" data-field="name" value="${esc(P.name)}" placeholder="Your name" autocomplete="off"></div>
-           <div class="fld"><label for="army${i}">Army</label><select id="army${i}" data-field="army">${opts(ARMIES, P.army, 'Select army')}</select></div>
-           <div class="fld"><label for="d1${i}">Detachment</label><select id="d1${i}" data-field="det1">${opts(DETS, P.det1, 'Select detachment')}</select></div>
-           ${P.detCount > 1 ? `<div class="fld"><label for="d2${i}">Second detachment</label><select id="d2${i}" data-field="det2">${opts(DETS, P.det2, 'None')}</select></div>` : ''}
-           ${P.detCount > 2 ? `<div class="fld"><label for="d3${i}">Third detachment</label><select id="d3${i}" data-field="det3">${opts(DETS, P.det3, 'None')}</select></div>` : ''}
+           <div class="fld"><label for="army${i}">Army <span class="opt-tag">optional</span></label><select id="army${i}" data-field="army">${opts(ARMIES, P.army, 'None')}</select></div>
+           <div class="fld"><label for="d1${i}">Detachment <span class="opt-tag">optional</span></label><select id="d1${i}" data-field="det1">${opts(DETS, P.det1, 'None')}</select></div>
+           ${P.detCount > 1 ? `<div class="fld"><label for="d2${i}">Second detachment <span class="opt-tag">optional</span></label><select id="d2${i}" data-field="det2">${opts(DETS, P.det2, 'None')}</select></div>` : ''}
+           ${P.detCount > 2 ? `<div class="fld"><label for="d3${i}">Third detachment <span class="opt-tag">optional</span></label><select id="d3${i}" data-field="det3">${opts(DETS, P.det3, 'None')}</select></div>` : ''}
            ${P.detCount < 3 ? `<button type="button" class="link" data-act="addDet">+ Add another detachment</button>` : ''}
-           <div class="fld"><label for="disp${i}">Disposition</label><select id="disp${i}" data-field="disp">${opts(DISPS, P.disp, 'Select disposition')}</select></div></div>`
+           <div class="fld"><label for="disp${i}">Disposition <span class="opt-tag">optional</span></label><select id="disp${i}" data-field="disp">${opts(DISPS, P.disp, 'None')}</select></div></div>`
         + foot(b('Review lists','toConfirm','btn',`id="setupNext" ${ok ? '' : 'disabled'}`));
       break; }
     case 'confirm': {
@@ -267,9 +274,9 @@ function playerView(i){
       h = bar('Step 2 of 3','Check both lists', icons())
         + `<div class="scroll">
            <div class="card"><div class="row" style="display:flex;justify-content:space-between"><span class="lbl">You</span><button type="button" class="link" style="padding:0;min-height:32px" data-act="edit">Edit</button></div>
-             <div style="font:700 19px var(--sans)">${nm(i)}</div><p>${esc(P.army)} · ${esc(dets(P))}<br>Disposition: ${esc(P.disp)}</p></div>
+             <div style="font:700 19px var(--sans)">${nm(i)}</div><p>${listInfo(P)}</p></div>
            <div class="card"><div class="lbl">Opponent · ${O.confirmed ? 'confirmed' : oppSeen ? 'reviewing' : 'still setting up'}</div>
-           ${oppSeen ? `<div style="font:700 19px var(--sans);margin-top:4px">${nm(o)}</div><p>${esc(O.army)} · ${esc(dets(O))}<br>Disposition: ${esc(O.disp)}</p>` : `<p style="margin-top:6px">Their list appears here once they finish setup.</p>`}</div></div>`
+           ${oppSeen ? `<div style="font:700 19px var(--sans);margin-top:4px">${nm(o)}</div><p>${listInfo(O)}</p>` : `<p style="margin-top:6px">Their list appears here once they finish setup.</p>`}</div></div>`
         + foot(P.confirmed ? `<div class="banner"><span>Waiting for Player ${o + 1} to confirm…</span></div>` : '', b(P.confirmed ? 'Confirmed' : 'Lists look right','confirm','btn', P.confirmed ? 'disabled' : ''));
       break; }
     case 'battle': {
@@ -333,8 +340,8 @@ function playerView(i){
            <div class="scroll">
            ${!both ? `<div class="banner"><span>Player ${o + 1} is still scoring. Their total updates live.</span></div>` : ''}
            <div class="vs" style="text-align:center">
-             <div class="card"><div class="lbl">${nm(i)}</div><div class="vp">${me}</div><p style="font-size:12px">${esc(P.army)}<br>${esc(P.disp)}</p></div>
-             <div class="card"><div class="lbl">${nm(o)}</div><div class="vp" style="color:var(--muted)">${them}</div><p style="font-size:12px">${esc(O.army)}<br>${esc(O.disp)}</p></div></div>
+             <div class="card"><div class="lbl">${nm(i)}</div><div class="vp">${me}</div><p style="font-size:12px">${listInfo(P, true)}</p></div>
+             <div class="card"><div class="lbl">${nm(o)}</div><div class="vp" style="color:var(--muted)">${them}</div><p style="font-size:12px">${listInfo(O, true)}</p></div></div>
            <div class="card" style="padding:6px 16px"><table><thead><tr><th>Round</th><th>You</th><th>Opp</th></tr></thead><tbody>${rows}</tbody></table></div>
            ${G.endedAt ? `<p style="text-align:center;font-size:12px">Spectator view closes in ${clock(remaining())}</p>` : ''}</div>`
         + foot(b('Share results image','noop'), b('New game','newGame','btn2'));
@@ -368,7 +375,7 @@ function playerView(i){
     case 'leave': h += sheet(`<div class="lbl">Leave match</div><h2>Leave this game?</h2><p>The session ends for both players and any spectators. Scores won’t be saved.</p>
         ${b('Leave match','confirmLeave','btn2 danger')}${b('Keep playing','closeSheet')}`); break;
     case 'opp': h += sheet(`<div class="lbl">Opponent · ${status(O)}</div><h2>${nm(o)}</h2>
-        <p>${esc(O.army || '[Army]')} · ${esc(dets(O))}<br>Disposition: ${esc(O.disp || '[Disposition]')}<br>${G.attacker === null ? '' : G.attacker === o ? 'Attacker' : 'Defender'}${G.first === o ? ' · first turn' : ''}</p>
+        <p>${listInfo(O)}<br>${G.attacker === null ? '' : G.attacker === o ? 'Attacker' : 'Defender'}${G.first === o ? ' · first turn' : ''}</p>
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
         ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
@@ -401,7 +408,7 @@ function spectatorView(){
   const P = G.players, br = P[0].round;
   const col = i => { const p = P[i]; const roles = [G.attacker === null ? '' : G.attacker === i ? 'Attacker' : 'Defender', G.first === i ? 'First turn' : ''].filter(Boolean).join(' · ');
     return `<div class="card" style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="lbl">${roles || 'Player ' + (i + 1)}</div><div style="font:700 20px var(--sans);overflow-wrap:anywhere">${nm(i)}</div>
-      <p style="font-size:13px">${esc(p.army || '[Army]')} · ${esc(dets(p))}<br>${esc(p.disp || '[Disposition]')}</p>
+      <p style="font-size:13px">${listInfo(p)}</p>
       <div class="vp">${total(p)}</div><div class="lbl">Victory points</div>
       <p style="font-size:13px">Primary ${sum(p.prim) + p.postP} · Secondary ${sum(p.sec) + p.postS} · CP ${p.cp}</p>
       <span><span class="tag">${status(p)}</span></span></div>`; };
@@ -517,7 +524,7 @@ app.addEventListener('input', e => {
   P[f] = e.target.value;
   if (e.target.tagName === 'SELECT') { render(); return; }
   const next = document.getElementById('setupNext');
-  if (next) next.disabled = !(P.name.trim() && P.army && P.det1 && P.disp);
+  if (next) next.disabled = !P.name.trim();
 });
 document.querySelectorAll('[data-dev]').forEach(x => x.addEventListener('click', () => { dev = +x.dataset.dev; render(); }));
 document.getElementById('resetAll').addEventListener('click', () => { newGame(); dev = 0; render(); });

@@ -24,7 +24,7 @@ The compact row above the phone holds the dev-only controls:
 Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 
 - **Connect:** host shows a QR code and room code; opponent scans or types the code. Wrong or missing codes show a "room not found" error.
-- **Setup (3 steps):** name, army, up to three detachments and disposition; both players confirm lists; attacker/defender and first turn are set together.
+- **Setup (3 steps):** name (required), plus optional army, up to three detachments and disposition; both players confirm lists; attacker/defender and first turn are set together.
 - **Battle rounds 1–5:**
   - Pinned scoreboard with each player's VP and CP. Tap the opponent for their army, detachments, disposition and per-round scores.
   - Primary and secondary scoring with −10 / −5 / −1 / +1 / +5 / +10. CP uses a −/+ stepper.
