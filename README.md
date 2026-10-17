@@ -38,7 +38,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
   - Multi-step undo from the header.
   - Fix any past round from the round track (BR1–BR5, then FS for final scoring).
   - **Synced rounds:** tapping End battle round puts you in a Ready state (tap again to undo). The next round starts automatically as soon as both players are ready; there's no confirmation step.
-  - **Concede:** below End battle round. A confirmation sheet keeps the Yes button locked for a 5-second countdown; conceding ends the game for both players and goes to results.
+  - **Concede:** in the menu during battle rounds. A confirmation sheet keeps the Yes button locked for a 5-second countdown; conceding ends the game for both players and goes to results.
 - **End of game:** end-of-game scoring, then a results screen with a round-by-round breakdown.
 - **Menu:** invite spectators, left-handed controls, restart (the opponent must agree) and leave (ends the session for everyone).
 - **Spectator:** read-only live scoreboard. When the game ends, a 5:00 countdown runs, then the link expires.

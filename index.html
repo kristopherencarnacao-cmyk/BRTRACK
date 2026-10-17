@@ -379,7 +379,6 @@ function playerView(i){
              ${waiting
                ? `<button type="button" class="btn readybtn" data-act="unendRound" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
                : b(`End battle round ${P.round}`,'endRound', O.roundDone ? 'btn' : 'btn2','aria-pressed="false"')}
-             ${b('Concede','sheet','btn2 danger','data-arg="concede"')}
              ${b(P.round < 5 ? `Force advance to BR${P.round + 1} (dev)` : 'Force advance to final scoring (dev)','forceAdvance','devbtn')}
            </div></div>`
         // CP lives in the pinned footer: the most-tapped control, always in thumb reach
@@ -437,6 +436,7 @@ function playerView(i){
         <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
         <div class="sep"></div>
         ${b('Restart match…','restart','btn2')}
+        ${P.screen === 'round' ? b('Concede…','sheet','btn2 danger','data-arg="concede"') : ''}
         ${b('Leave match…','sheet','btn2 danger','data-arg="leave"')}
         <div class="sep"></div>${b('Close','closeSheet')}`); break;
     case 'share': h += sheet(`<div class="lbl">Invite spectators</div><div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
