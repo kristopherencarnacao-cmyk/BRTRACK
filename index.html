@@ -209,7 +209,7 @@ function status(p){
   return p.roundDone ? `Finished BR${p.round}` : `Scoring BR${p.round}`;
 }
 const opts = (list, val, empty) => `<option value="">${empty}</option>` + list.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('');
-const bar = (eyebrow, title, right = '') => `<div class="top"><div><div class="lbl">${eyebrow}</div><h2>${title}</h2></div>${right}</div>`;
+const bar = (eyebrow, title, right = '') => `<div class="top"><div>${eyebrow ? `<div class="lbl">${eyebrow}</div>` : ''}<h2>${title}</h2></div>${right}</div>`;
 const foot = (...btns) => `<div class="foot">${btns.join('')}</div>`;
 const b = (label, act, cls = 'btn', extra = '') => `<button type="button" class="${cls}" data-act="${act}" ${extra}>${label}</button>`;
 const sheet = (inner, close = 'closeSheet') => `<div class="overlay" ${close ? `data-act="${close}"` : ''}><div class="sheet" data-stop role="dialog" aria-modal="true"><div class="grab"></div>${inner}</div></div>`;
@@ -235,7 +235,7 @@ const track = (P, final = false) => `<div class="trk">${[1,2,3,4,5].map(n => (n 
 
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
 const scorer = (title, value, sub, key, r = '') => `<div class="scr">
-  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div><div class="meta" style="font-size:12px">${sub}</div></div><div class="v">${value}</div></div>
+  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div><div class="v">${value}</div></div>
   <div class="scr-b">${[-10,-5,-1,1,5,10].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`;
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
@@ -254,14 +254,14 @@ function playerView(i){
         + foot(b('Host a game','host'), b('Join a game','join','btn2'));
       break;
     case 'host':
-      h = bar('Connect','Have your opponent scan')
+      h = bar('','Have your opponent scan')
         + `<div class="scroll center"><div class="ph" style="width:min(240px,70%);aspect-ratio:1;max-width:100%">QR CODE</div><div><div class="lbl">Room code</div><div class="num" style="letter-spacing:.12em;font-size:30px">${ROOM}</div></div>
            <div class="banner" style="width:100%"><span>Waiting for opponent…</span></div>
            <div class="proto"><div class="lbl">Prototype</div><p>Switch to Player ${o + 1} and tap Join a game.</p></div></div>`
         + foot(b('Cancel','cancelHost','btn2'));
       break;
     case 'join':
-      h = bar('Connect','Scan the host’s code')
+      h = bar('','Scan the host’s code')
         + `<div class="scroll"><div class="ph" style="flex:1;min-height:180px">CAMERA VIEWFINDER</div>
            <div class="proto"><div class="lbl">Prototype</div><button type="button" data-act="scan">Simulate scanning the QR</button></div>
            <div class="fld"><label for="code${i}">Can’t scan? Enter the room code</label><input id="code${i}" data-field="code" value="${esc(P.code)}" placeholder="e.g. ${ROOM}" autocomplete="off" autocapitalize="characters"></div>
@@ -335,7 +335,7 @@ function playerView(i){
         + foot(cpBar(P));
       break; }
     case 'post':
-      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<div style="min-width:0;flex:1"><div class="lbl">After battle round 5</div><h2 style="font-size:18px;white-space:nowrap">Final scoring</h2></div></div>${icons()}</div>`
+      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<h2 style="font-size:clamp(16px,5vw,20px);white-space:nowrap;margin:0">Final scoring</h2></div>${icons()}</div>`
         + `<div class="scroll">
            ${track(P, true)}
            <div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
@@ -343,8 +343,8 @@ function playerView(i){
            <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
            <div class="deck">
              ${flash}
-             ${scorer('Primary', P.postP, 'End of game', 'postP')}
-             ${scorer('Secondary', P.postS, 'End of game', 'postS')}
+             ${scorer('Primary', P.postP, '', 'postP')}
+             ${scorer('Secondary', P.postS, '', 'postS')}
            </div></div>`
         + foot(b('Finish game','finish'));
       break;
@@ -353,7 +353,7 @@ function playerView(i){
       const outcome = !both ? 'Waiting for opponent' : me > them ? 'Victory' : me < them ? 'Defeat' : 'Draw';
       const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${roundPts(P, n-1)}</td><td>${roundPts(O, n-1)}</td></tr>`).join('')
         + `<tr><td>End of game</td><td>${P.postP + P.postS}</td><td>${O.postP + O.postS}</td></tr><tr><td>CP left</td><td>${P.cp}</td><td>${O.cp}</td></tr>`;
-      h = `<div class="top" style="justify-content:center;text-align:center"><div><div class="lbl">Battle results</div><h2 style="font-size:28px">${outcome}</h2></div></div>
+      h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">${outcome}</h2></div>
            <div class="scroll">
            ${!both ? `<div class="banner"><span>Player ${o + 1} is still scoring. Their total updates live.</span></div>` : ''}
            <div class="vs" style="text-align:center">
@@ -364,11 +364,11 @@ function playerView(i){
         + foot(b('New game','newGame'));
       break; }
     case 'restartWait':
-      h = `<div class="scroll" style="justify-content:center"><div class="lbl">Restart match</div><h2>Waiting for Player ${o + 1} to agree</h2>
+      h = `<div class="scroll" style="justify-content:center"><h2>Waiting for Player ${o + 1} to agree to a restart</h2>
            <p>Both players must agree. Scores and setup will be cleared.</p><div class="proto"><div class="lbl">Prototype</div><p>Switch to Player ${o + 1} to answer.</p></div></div>` + foot(b('Cancel request','cancelRestart','btn2'));
       break;
     case 'declined':
-      h = `<div class="scroll" style="justify-content:center"><div class="lbl">Restart declined</div><h2>Your opponent wants to keep playing</h2>
+      h = `<div class="scroll" style="justify-content:center"><h2>Your opponent declined the restart</h2>
            <p>Continue the match, or leave. Leaving ends the session for both players.</p></div>` + foot(b('Leave match','confirmLeave','btn2 danger'), b('Continue match','back'));
       break;
     case 'expired':
@@ -389,16 +389,16 @@ function playerView(i){
     case 'share': h += sheet(`<div class="lbl">Invite spectators</div><div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
         <div class="ph" style="width:180px;height:180px">QR CODE</div><div><div class="lbl">Room code</div><div class="num" style="letter-spacing:.12em">${ROOM}</div></div>
         <p>Or open [short link] on a TV, tablet or phone. Spectators can’t change scores.</p></div>${b('Done','closeSheet')}`); break;
-    case 'leave': h += sheet(`<div class="lbl">Leave match</div><h2>Leave this game?</h2><p>The session ends for both players and any spectators. Scores won’t be saved.</p>
+    case 'leave': h += sheet(`<h2>Leave this game?</h2><p>The session ends for both players and any spectators. Scores won’t be saved.</p>
         ${b('Leave match','confirmLeave','btn2 danger')}${b('Keep playing','closeSheet')}`); break;
-    case 'opp': h += sheet(`<div class="lbl">Opponent · ${status(O)}</div><h2>${nm(o)}</h2>
+    case 'opp': h += sheet(`<h2>${nm(o)}</h2><div class="meta">${status(O)}</div>
         <p>${listInfo(O)}<br>${G.attacker === null ? '' : G.attacker === o ? 'Attacker' : 'Defender'}${G.first === o ? ' · first turn' : ''}</p>
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
         ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
     case 'endRound': {
       const last = P.round === 5, next = last ? 'end-of-game scoring' : `battle round ${P.round + 1}`;
-      h += sheet(`<div class="lbl">End battle round ${P.round}</div><h2>Are you sure you want to end battle round ${P.round}?</h2>
+      h += sheet(`<h2>Are you sure you want to end battle round ${P.round}?</h2>
         <div class="card" style="display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;justify-content:space-between"><span class="meta">Primary</span><strong>${signed(P.prim[r])}</strong></div>
           <div style="display:flex;justify-content:space-between"><span class="meta">Secondary</span><strong>${signed(P.sec[r])}</strong></div>
@@ -407,12 +407,12 @@ function playerView(i){
         ${b('Cancel','closeSheet','btn2')}${b(`Yes, end battle round ${P.round}`,'endRound')}`); break; }
     case 'edit': {
       const e = P.editRound - 1;
-      h += sheet(`<div class="lbl">Fix a past round</div><h2>Battle round ${P.editRound}</h2>
-        <div class="deck" style="margin-top:0">${scorer('Primary', P.prim[e], `BR${P.editRound}`, 'prim', P.editRound)}${scorer('Secondary', P.sec[e], `BR${P.editRound}`, 'sec', P.editRound)}</div>
+      h += sheet(`<h2>Fix battle round ${P.editRound}</h2>
+        <div class="deck" style="margin-top:0">${scorer('Primary', P.prim[e], '', 'prim', P.editRound)}${scorer('Secondary', P.sec[e], '', 'sec', P.editRound)}</div>
         <p style="font-size:13px">Changes sync to your opponent straight away.</p>${b('Done','closeSheet')}`); break; }
   }
   if (G.restartReq === o && P.screen !== 'expired')
-    h += sheet(`<div class="lbl">Restart request</div><h2>${nm(o)} wants to restart the match</h2><p>All scores and setup will be cleared for both players.</p>${b('Decline','decline','btn2')}${b('Agree and restart','agree')}`, null);
+    h += sheet(`<h2>${nm(o)} wants to restart the match</h2><p>All scores and setup will be cleared for both players.</p>${b('Decline','decline','btn2')}${b('Agree and restart','agree')}`, null);
   return h;
 }
 
