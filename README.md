@@ -49,4 +49,4 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 - Real cross-device sync (for example Supabase or WebSockets); everything currently runs in one page.
 - Real QR generation and camera scanning.
 - Army, detachment and disposition are free-text today; picking them from an auto-populated list is a later step.
-- Results image export, and the general 404 page.
+- The general 404 page.

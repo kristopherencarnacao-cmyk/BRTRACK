@@ -361,7 +361,7 @@ function playerView(i){
              <div class="card"><div class="lbl">${nm(o)}</div><div class="vp" style="color:var(--muted)">${them}</div><p style="font-size:12px">${listInfo(O, true)}</p></div></div>
            <div class="card" style="padding:6px 16px"><table><thead><tr><th>Round</th><th>You</th><th>Opp</th></tr></thead><tbody>${rows}</tbody></table></div>
            ${G.endedAt ? `<p style="text-align:center;font-size:12px">Spectator view closes in ${clock(remaining())}</p>` : ''}</div>`
-        + foot(b('Share results image','noop'), b('New game','newGame','btn2'));
+        + foot(b('New game','newGame'));
       break; }
     case 'restartWait':
       h = `<div class="scroll" style="justify-content:center"><div class="lbl">Restart match</div><h2>Waiting for Player ${o + 1} to agree</h2>
