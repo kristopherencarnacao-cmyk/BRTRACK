@@ -393,7 +393,7 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .scr{padding:8px;gap:6px}.scr-h .v{font-size:24px}
   .scr-b button{height:42px}
   .deck .btn,.deck .btn2{min-height:44px}
-  .foot{padding:8px 16px 10px}.cpbar{height:50px}.cpmid .v{font-size:22px}
+  .foot{padding:8px 16px 10px}
   .scroll>.board.solo{min-height:140px}
   .board.solo .stat .big{font-size:24px}
   .scroll>.board:not(.solo){min-height:140px}
@@ -405,12 +405,25 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .scr{padding:6px 8px;gap:4px}.scr-h .v{font-size:20px}.scr-h div[style*="font:600 15px"]{font-size:13px!important}
   .scr-b button{height:38px;font-size:14px}
   .deck .btn,.deck .btn2{min-height:40px}
-  .cpbar{height:44px}.cpmid .v{font-size:19px}.cpmid .lbl{font-size:9px}
+  .scroll{gap:4px}.deck{gap:4px}.trk button{min-height:32px}.scr-b button{height:36px}.foot{padding:6px 16px 8px}
   .scroll>.board.solo{min-height:124px}
   .board.solo .stat{padding:2px 0}.board.solo .stat .big{font-size:20px}.board.solo .sb-aside{gap:2px}.board.solo .undo{height:30px}
   .scroll>.board:not(.solo){min-height:128px}
   .board:not(.solo) .meta{font-size:12px}
 }
+
+/* CP tracker: 50% taller and in PhosphorDice's crit gold; the number is the hero, a small "CP" sits inline beside it */
+.cpbar{height:90px;--cp-line:rgba(245,196,81,.35)}
+.cpbar button{border-color:var(--cp-line);color:var(--gold);font-size:24px}
+.cpbar button:hover{background:rgba(245,196,81,.08);border-color:var(--gold);box-shadow:0 0 12px var(--gold-glow)}
+.cpbar button.add{background:color-mix(in srgb,var(--gold) 12%,var(--bg));border-color:var(--cp-line);color:var(--gold);text-shadow:0 0 8px var(--gold-glow)}
+.cpbar button.add:hover{background:color-mix(in srgb,var(--gold) 20%,var(--bg));border-color:var(--gold)}
+.cpbar button:active,.cpbar button.add:active{background:var(--gold)!important;border-color:var(--gold)!important;color:var(--on-gold)!important;text-shadow:none!important}
+.cpmid{--fr:var(--gold);width:104px;flex-direction:row;align-items:baseline;justify-content:center;gap:5px;padding-top:4px;border-color:var(--gold);
+  box-shadow:inset 0 0 16px rgba(245,196,81,.10),0 0 12px rgba(245,196,81,.12);align-content:center;flex-wrap:wrap}
+.cpmid .v{margin:0;font:700 46px/1 var(--mono);color:var(--gold);text-shadow:0 0 12px var(--gold-glow),0 0 2px rgba(245,196,81,.8)}
+.cpmid .cp-u{font:700 12px/1 var(--mono);letter-spacing:.12em;color:var(--gold);opacity:.75}
+@media (max-width:380px){.cpmid{width:92px}.cpmid .v{font-size:40px}}
 
 /* modals: centred bracketed panel over a blurred scrim, opening with PhosphorDice's guide flicker */
 .overlay{justify-content:center;align-items:center;padding:24px 16px;background:rgba(1,6,4,.8);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
@@ -557,7 +570,7 @@ const scorer = (title, value, sub, key, r = '') => `<div class="scr">
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
 const cpBar = P => `<div class="cpbar">${[-2,-1].map(d => `<button type="button" data-act="bump" data-arg="cp:${d}:" aria-label="Remove ${-d} CP">−${-d}</button>`).join('')}
-  <div class="cpmid" role="status" aria-label="${P.cp} command points"><span class="lbl">CP</span><span class="v">${P.cp}</span></div>
+  <div class="cpmid" role="status" aria-label="${P.cp} command points"><span class="v">${P.cp}</span><span class="cp-u" aria-hidden="true">CP</span></div>
   ${[1,2].map(d => `<button type="button" class="add" data-act="bump" data-arg="cp:${d}:" aria-label="Add ${d} CP">+${d}</button>`).join('')}</div>`;
 
 const PHONE = (x, y, w = 56, h = 100) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/><line x1="${x + w/2 - 8}" y1="${y + 7}" x2="${x + w/2 + 8}" y2="${y + 7}"/>`;
