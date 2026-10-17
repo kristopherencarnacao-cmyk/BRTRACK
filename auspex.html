@@ -284,6 +284,14 @@ td,th{border-bottom-color:var(--soft)}
 .devbtn{text-transform:uppercase;letter-spacing:.08em;font-size:11px;border-radius:0}
 
 @media (prefers-reduced-motion:reduce){body::before,h1::after{animation:none}}
+/* scoring rows sit back so the scoreboard VP stays the brightest thing on screen */
+.scr{--fr:var(--line);border-color:var(--soft);background-color:var(--surface);box-shadow:none;
+  background-image:linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr))}
+.scr-h .v{color:var(--ink);text-shadow:none;opacity:.9}
+.scr-h div[style*="font:600 15px"]{color:var(--muted)}
+.scr-b button{border-color:var(--soft);color:#3fae7f}
+.scr-b button.add{background:#0c1f17;border-color:var(--soft);color:#4cc994;text-shadow:none}
+.scr-b button:hover,.scr-b button.add:hover{border-color:var(--line);background:#112e21}
 /* monospace runs wider: let list details wrap and tighten headings on small phones */
 .card p,.vs p,.spec p{overflow-wrap:anywhere}
 @media (max-width:380px){.top h2{letter-spacing:0;font-size:14px!important}}
