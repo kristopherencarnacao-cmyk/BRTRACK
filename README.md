@@ -6,12 +6,12 @@ This is a design prototype: a single HTML file with no build step and no backend
 
 ## Versions
 
-- **`index.html`**: the wireframe prototype (light/dark, system fonts).
-- **`auspex.html`**: the same app restyled in the Auspex phosphor-terminal look shared with PhosphorDice and Dominatus Codex (cold black, phosphor green, monospace, bracketed panels, CRT scanlines). Both are kept in sync for visual design testing.
+- **`auspex.html`**: the active version. The app styled in the Auspex phosphor-terminal look shared with PhosphorDice and Dominatus Codex (cold black, phosphor green, monospace, bracketed panels, CRT scanlines). All new work happens here.
+- **`index.html`**: the earlier light/dark wireframe, frozen as of the score-batching update and no longer maintained.
 
 ## Run it
 
-Open `index.html` in any modern browser. Nothing to install.
+Open `auspex.html` in any modern browser. Nothing to install.
 
 To host it, enable **GitHub Pages** for this repo (Settings → Pages → deploy from the `main` branch, root folder).
 
@@ -37,8 +37,8 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 - **Battle rounds 1–5:**
   - Pinned scoreboard with each player's VP and CP. Tap the opponent for their army, detachments, disposition and per-round scores.
   - Primary and secondary scoring with −1 / +1 / +2 / +3 / +4 / +5. CP sits in the pinned footer with −2 / −1 / +1 / +2.
-  - **Score batching:** Primary and Secondary taps gather into a pending tally (e.g. `+5`) shown on each panel, with a draining 3-second bar and a faint total beside the score label. Three seconds after the last tap the whole batch is added to the scoreboard as one step. Tap the tally to add it straight away. Leaving the round (Next round, jumping to another round, Finish), backgrounding the app or closing it all commit pending points first, to the round they were tapped in. CP stays instant.
-  - Multi-step undo from the header: undo cancels the pending tally if there is one; otherwise it removes the last whole batch (or CP tap).
+  - **Score batching:** Primary and Secondary taps gather into a pending tally (e.g. `+5`) shown on each panel. One countdown bar runs along the bottom of the scoreboard, with the running total just above it and Undo beside it. The delay is set in the menu (Instant, 3s, 5s or 10s; 3s by default). When the delay runs out after the last tap, the whole batch is added to the scoreboard as one step. Tap the tally to add it straight away. Leaving the round (Next round, jumping to another round, Finish), backgrounding the app or closing it all commit pending points first, to the round they were tapped in. CP stays instant.
+  - Multi-step undo (scoring only): undo cancels the pending tally if there is one; otherwise it removes the last whole batch. CP changes are not part of undo.
   - Fix any past round from the round track (BR1–BR5, then FS for final scoring). In two-player mode this opens a fix sheet; in single mode it opens that round's page.
   - **Synced rounds:** tapping End battle round puts you in a Ready state (tap again to undo). The next round starts automatically as soon as both players are ready; there's no confirmation step.
   - **Concede:** in the menu during battle rounds. A confirmation sheet keeps the Yes button locked for a 5-second countdown; conceding ends the game for both players and goes to results.
