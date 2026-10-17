@@ -284,8 +284,8 @@ function playerView(i){
       const set = G.attacker !== null && G.first !== null;
       h = bar('Step 3 of 3','Roles and first turn', icons())
         + `<div class="scroll">
-           <div class="fld"><span class="lbl">Your role</span><div class="seg"><button type="button" data-act="side" data-arg="att" aria-pressed="${G.attacker === i}">Attacker</button><button type="button" data-act="side" data-arg="def" aria-pressed="${G.attacker === o}">Defender</button></div></div>
-           <div class="fld"><span class="lbl">First turn (roll-off winner’s choice)</span><div class="seg"><button type="button" data-act="first" data-arg="me" aria-pressed="${G.first === i}">Me</button><button type="button" data-act="first" data-arg="opp" aria-pressed="${G.first === o}">Opponent</button></div></div>
+           <div class="fld"><span class="lbl">Attacker and defender</span><p style="font-size:13px">Each player rolls a D6. The highest roller decides who attacks. Pick your role:</p><div class="seg" role="group" aria-label="Your role"><button type="button" data-act="side" data-arg="att" aria-pressed="${G.attacker === i}">Attacker</button><button type="button" data-act="side" data-arg="def" aria-pressed="${G.attacker === o}">Defender</button></div></div>
+           <div class="fld"><span class="lbl">First turn</span><p style="font-size:13px">Each player rolls a D6. The highest roller must go first. Who won?</p><div class="seg" role="group" aria-label="First turn roll-off winner"><button type="button" data-act="first" data-arg="me" aria-pressed="${G.first === i}">I won</button><button type="button" data-act="first" data-arg="opp" aria-pressed="${G.first === o}">Opponent won</button></div></div>
            <p style="font-size:12px">Either player can set these. Changes show on both devices.</p>
            <details><summary>Deployment reminders</summary><p>[Mission-pack tips: deployment zones, alternating deployment, reserves, scout moves]</p></details>
            ${set ? `<div class="card" style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
