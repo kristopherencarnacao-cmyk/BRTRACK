@@ -238,7 +238,9 @@ button.side:hover{background:var(--accent-soft)}
 /* scorers and CP */
 .scr-b button,.cpbar button{background:transparent;border-color:var(--line);color:var(--accent)}
 .scr-b button:hover,.cpbar button:hover{background:var(--accent-soft);border-color:var(--accent)}
-.scr-b button.add,.cpbar button.add{background:var(--accent);border-color:var(--accent);color:var(--on-ink);box-shadow:0 0 10px var(--glow-soft)}
+/* plus buttons: phosphor at ~20% brightness, so text flips to lit phosphor */
+.scr-b button.add,.cpbar button.add{background:#112e21;border-color:var(--accent);color:var(--accent);text-shadow:0 0 8px var(--glow);box-shadow:0 0 10px var(--glow-soft)}
+.scr-b button.add:hover,.cpbar button.add:hover{background:#174230;border-color:var(--seal-hi)}
 .scr-b button:active,.cpbar button:active{filter:brightness(1.3)}
 .scr-h .v,.cpmid .v{color:var(--accent);text-shadow:0 0 10px var(--glow)}
 .cpmid{background:var(--surface);border-color:var(--accent);box-shadow:inset 0 0 14px rgba(var(--rgb),.08)}
