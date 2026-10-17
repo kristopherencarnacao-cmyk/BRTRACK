@@ -103,6 +103,10 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
+.toastov{position:absolute;left:50%;top:6px;z-index:8;max-width:calc(100% - 32px);padding:10px 18px;border-radius:999px;background:var(--ink);color:var(--on-ink);font:600 14px var(--sans);
+  box-shadow:0 8px 24px rgba(0,0,0,.28);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:toastov 4s ease both}
+@keyframes toastov{0%{opacity:0;transform:translate(-50%,-8px)}8%{opacity:1;transform:translate(-50%,0)}85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){@keyframes toastov{0%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}}
 body:not(.dev) .devbar,body:not(.dev) .devbtn{display:none!important}
 body:not(.dev) .phone{height:min(780px,calc(100dvh - 40px))}
 .board.solo{grid-template-columns:1fr}
@@ -295,6 +299,10 @@ td,th{border-bottom-color:var(--soft)}
 .devbtn{text-transform:uppercase;letter-spacing:.08em;font-size:11px;border-radius:0}
 
 @media (prefers-reduced-motion:reduce){body::before,h1::after{animation:none}}
+.toastov{border-radius:0;background:var(--surface);border:1px solid var(--accent);color:var(--accent);font:700 12.5px var(--term);letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:0 0 8px var(--glow);box-shadow:0 0 18px var(--glow-soft),0 10px 26px rgba(0,0,0,.6)}
+.toastov::before{content:"> ";opacity:.7}
+@media (max-width:360px){.toastov{letter-spacing:.02em;font-size:11.5px;padding:10px 12px}}
 /* readout stats as in PhosphorDice: plain label over a lit number */
 .stat .lbl{font-size:10px;letter-spacing:.14em}
 .stat .lbl::before{content:none}
@@ -338,12 +346,13 @@ const LABEL = { prim:'Primary', sec:'Secondary', cp:'Command points', postP:'End
 const QR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM21 14v3M14 21h7"/></svg>';
 const MENU = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 
-const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, army:'', det1:'', det2:'', det3:'', detCount:1, disp:'',
+const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, maxRound:1, reachedFS:false, army:'', det1:'', det2:'', det3:'', detCount:1, disp:'',
   confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
   sheet:null, editRound:null, last:null, joinErr:'', code:'', lefty:false });
 let G, dev = 0, wake = null;
 var newGame = function(){ G = { solo:null, host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, conceded:null, concedeRound:null, players:[freshPlayer(), freshPlayer()] }; }
 const CONCEDE_MS = 5000;
+const SAVE_KEY = 'scorehammer:game';
 let SEEN = [false, false];   // per device: has this player finished or skipped onboarding?
 const _newGame = newGame;
 newGame = function(){ _newGame(); };   // onboarding only opens from 'How it works' on the start screen
@@ -393,7 +402,16 @@ const stepper = (title, value, sub, key, r = '', short = title) => `<div class="
 
 // round track: past rounds open the fix-a-round sheet; on the post-game screen every round is fixable
 // BR1–5 then FS (final scoring). On the final scoring screen FS is current and every BR is fixable
-const track = (P, final = false) => `<div class="trk">${[1,2,3,4,5].map(n => (n === P.round && !final)
+// single mode: the track is navigation. Any round you've reached (and FS once reached) opens that round's normal page
+const soloTrack = (P, final) => { const max = P.reachedFS ? 5 : (P.maxRound || P.round);
+  return `<div class="trk">${[1,2,3,4,5].map(n => (!final && n === P.round)
+    ? `<button type="button" class="cur" aria-current="step">BR${n}</button>`
+    : n <= max ? `<button type="button" data-act="goRound" data-arg="${n}" aria-label="Go to battle round ${n}">BR${n}</button>`
+    : `<button type="button" disabled>BR${n}</button>`).join('')}${final
+    ? '<button type="button" class="cur" aria-current="step" aria-label="Final scoring">FS</button>'
+    : P.reachedFS ? '<button type="button" data-act="goRound" data-arg="6" aria-label="Go to final scoring">FS</button>'
+    : '<button type="button" disabled aria-label="Final scoring">FS</button>'}</div>`; };
+const track = (P, final = false) => G.solo !== null ? soloTrack(P, final) : `<div class="trk">${[1,2,3,4,5].map(n => (n === P.round && !final)
   ? `<button type="button" class="cur" aria-current="step">BR${n}</button>`
   : (n < P.round || final) ? `<button type="button" data-act="editRound" data-arg="${n}" aria-label="Fix battle round ${n}">BR${n}</button>`
   : `<button type="button" disabled>BR${n}</button>`).join('')}${final
@@ -413,7 +431,7 @@ const cpBar = P => `<div class="cpbar">${[-2,-1].map(d => `<button type="button"
 const PHONE = (x, y, w = 56, h = 100) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/><line x1="${x + w/2 - 8}" y1="${y + 7}" x2="${x + w/2 + 8}" y2="${y + 7}"/>`;
 const SLIDES = [
   { title:'Track your score',
-    body:'Tap +1 to +5 to add primary and secondary points each battle round, and use the bar at the bottom for command points. End the round to move on. Undo or tap a past round to fix a mistake.',
+    body:'Tap +1 to +5 to add primary and secondary points each battle round, and use the bar at the bottom for command points. Tap Next round to move on. Undo, or tap a past round to go back and change it.',
     svg:`<rect x="76" y="6" width="88" height="140" rx="10"/><line x1="112" y1="14" x2="128" y2="14"/>
       <rect x="86" y="24" width="68" height="30" rx="3"/><text x="120" y="45" text-anchor="middle" class="big">14</text>
       ${[0,1,2,3,4].map(k => `<circle cx="${92 + k*14}" cy="64" r="4" class="${k < 2 ? 'fill' : ''}"/>`).join('')}
@@ -438,7 +456,10 @@ function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
   let h = '';
   const undone = P.undone ? `<span class="sr" role="status">Undid ${LABEL[P.undone.key]} ${signed(P.undone.d)}</span>` : '';
-  const flash = (P.flash && Date.now() - P.flash.t < TOAST_MS) ? `<div class="banner" role="status" style="border-style:solid"><strong>${P.flash.text}</strong></div>` : '';
+  // toasts float over the screen instead of taking space in the layout; the negative delay keeps the fade in step across re-draws
+  const flashAge = P.flash ? Date.now() - P.flash.t : Infinity;
+  const toastOv = flashAge < TOAST_MS ? `<div class="toastov" role="status" style="animation-delay:-${flashAge}ms">${esc(P.flash.text)}</div>` : '';
+  const flash = '';
   switch (P.screen){
     case 'onboard': {
       const k = P.obStep || 0, S = SLIDES[k], last = k === SLIDES.length - 1;
@@ -505,7 +526,7 @@ function playerView(i){
              ${slot}
              ${scorer('Primary', P.prim[r], '', 'prim')}
              ${scorer('Secondary', P.sec[r], '', 'sec')}
-             ${solo ? b(P.round < 5 ? `End battle round ${P.round}` : 'End battle round 5','endRound','btn2')
+             ${solo ? b(P.round < 5 ? 'Next round' : 'Go to final scoring','endRound','btn2')
                : waiting
                ? `<button type="button" class="btn readybtn" data-act="unendRound" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
                : b(`End battle round ${P.round}`,'endRound', O.roundDone ? 'btn' : 'btn2','aria-pressed="false"')}
@@ -609,6 +630,7 @@ function playerView(i){
         <div class="deck" style="margin-top:0">${scorer('Primary', P.prim[e], '', 'prim', P.editRound)}${scorer('Secondary', P.sec[e], '', 'sec', P.editRound)}</div>
         ${G.solo === null ? '<p style="font-size:13px">Changes sync to your opponent straight away.</p>' : ''}${b('Done','closeSheet')}`); break; }
   }
+  if (['round','post'].includes(P.screen)) h += toastOv;
   if (G.restartReq === o && P.screen !== 'expired')
     h += sheet(`<h2>${nm(o)} wants to restart the match</h2><p>All scores and setup will be cleared for both players.</p>${b('Decline','decline','btn2')}${b('Agree and restart','agree')}`, null);
   return h;
@@ -668,6 +690,7 @@ function render(){
     if (focusSel) { const el = app.querySelector(focusSel); if (el && !el.disabled) el.focus({ preventScroll:true }); }
   }
   lastView = view;
+  save();   // every tap ends in a render, so every change is saved
   if (P && P.screen === 'round' && !wake && navigator.wakeLock) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {});
 }
 
@@ -726,15 +749,22 @@ function act(a, arg){
       P.undone = L; P.last = null; break; }
     case 'forceAdvance': O.roundDone = true;   // dev shortcut: mark the opponent ready, then end this player's round
     // falls through
+    case 'goRound':   // single mode: jump to any reached round's page, or FS
+      P.sheet = null; P.flash = null;
+      if (+arg === 6) P.screen = 'post'; else { P.screen = 'round'; P.round = +arg; }
+      break;
     case 'solo':   // single mode: no name, no connection; straight to battle round 1
       newGame(); G.solo = i;
       Object.assign(G.players[i], { screen:'round', name:'You', lefty:P.lefty }); break;
     case 'soloRestart': { const p = G.players[i]; Object.assign(p, freshPlayer('You'), { screen:'round', lefty:p.lefty }); break; }
     case 'endRound':
-      if (G.solo !== null) {   // nobody to wait for: advance now
-        P.sheet = null; P.last = null; P.history = []; P.undone = null;
-        if (P.round < 5) { P.round++; P.flash = { text:`Battle round ${P.round} has started`, t:Date.now() }; }
-        else { P.screen = 'post'; P.flash = null; }
+      if (G.solo !== null) {   // nobody to wait for: Next round moves straight on (undo history is per round, so it carries over)
+        P.sheet = null;
+        if (P.round < 5) {
+          const isNew = P.round + 1 > (P.maxRound || 1);
+          P.round++; P.maxRound = Math.max(P.maxRound || 1, P.round);
+          P.flash = isNew ? { text:`Battle round ${P.round} has started`, t:Date.now() } : null;
+        } else { P.screen = 'post'; P.reachedFS = true; P.flash = null; }
         setTimeout(render, TOAST_MS + 50); break;
       }
       P.sheet = null; P.last = null; P.roundDone = true;
@@ -800,6 +830,32 @@ setInterval(() => {
   if (!G.endedAt) return;
   if (dev === 2 || G.players[dev]?.screen === 'results') render();
 }, 1000);
+
+// ---- Save and resume (single mode) ----
+// The game is written to this browser's storage after every change. On launch, a game in
+// progress is restored silently: the player lands back on their round with no prompt.
+// Starting a new game or exiting to the start screen clears it.
+function save(){
+  try {
+    if (G.solo !== null) localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, savedAt:Date.now(), G }));
+    else localStorage.removeItem(SAVE_KEY);
+  } catch (e) {}   // private browsing or storage full: keep playing, just without saving
+}
+function restore(){
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (!s || s.v !== 1 || !s.G || s.G.solo === null || s.G.solo === undefined) return;
+    const p = s.G.players && s.G.players[s.G.solo];
+    if (!p || !['round','post','results'].includes(p.screen)) return;
+    G = s.G; dev = G.solo;
+    G.players.forEach(x => { x.sheet = null; x.editRound = null; x.flash = null; x.undone = null; });   // reopen on a clean screen
+  } catch (e) {}   // unreadable save: start fresh
+}
+// also save when the app is backgrounded (switching to the Warhammer app, locking the phone)
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
+
+restore();
 render();
 </script>
 </body>
