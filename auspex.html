@@ -358,13 +358,53 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 .board.solo .side.sb{align-items:stretch}
 .sb-main{justify-content:space-between}
 .sb-aside{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:10px;flex:none}
-.undo{height:32px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;flex:none;background:transparent;border:1px solid var(--line);border-radius:0;
+.undo{height:36px;padding:0 10px;margin-right:-10px;display:inline-flex;align-items:center;gap:6px;flex:none;background:transparent;border:0;border-radius:0;
   color:var(--accent);font:600 11px/1 var(--term);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .15s,box-shadow .15s,border-color .15s}
 .undo svg{width:14px;height:14px}
-.undo:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 12px var(--glow-soft)}
-.undo:active:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
+.undo:hover:not(:disabled){background:var(--accent-soft);text-shadow:0 0 8px var(--glow)}
+.undo:active:not(:disabled){background:var(--accent);color:var(--on-ink);text-shadow:none}
 .undo:disabled{opacity:.35;cursor:default}
-.board:not(.solo) .undo{align-self:flex-start;margin-top:8px}
+.board:not(.solo) .undo{align-self:flex-start;margin:auto 0 0 -10px;padding-top:0}
+/* the scoreboard grows into any spare height so the screen has no dead gap; the controls stay at the bottom.
+   It is a size container, so the big score scales with whatever room it gets */
+.scroll>.board{flex:1 1 auto;container-type:size;min-height:122px}
+.scroll>.board:not(.solo){min-height:156px}
+.board:not(.solo) .side{padding-bottom:6px}
+.scroll>.board:not(.solo) .vp{font-size:clamp(40px,min(46cqi,calc(100cqh - 120px)),140px)}
+/* solo: label + totals across the top, big score + Undo along the bottom */
+.board.solo .side.sb{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;gap:4px 12px;align-items:start}
+.board.solo .sb-main,.board.solo .sb-aside{display:contents}
+.board.solo .sb-main>.lbl{grid-area:1/1}
+.board.solo .stats{grid-area:1/2}
+.board.solo .vp{grid-area:2/1;align-self:end;line-height:.9}
+.board.solo .undo{grid-area:2/2;align-self:end;justify-self:end}
+.scroll>.board.solo .vp{font-size:clamp(44px,min(calc(100cqh - 78px),calc((100cqw - 110px) / 1.85)),160px)}
+
+/* short screens (an iPhone SE or a phone browser with its toolbars): tighten the controls so a round fits without scrolling */
+@media (max-height:720px){
+  .top.tight{min-height:44px}.brand{font-size:21px}
+  .scroll{padding:10px 16px;gap:8px}
+  .trk button{min-height:38px}
+  .deck{gap:6px}
+  .scr{padding:8px;gap:6px}.scr-h .v{font-size:24px}
+  .scr-b button{height:42px}
+  .deck .btn,.deck .btn2{min-height:44px}
+  .foot{padding:8px 16px 10px}.cpbar{height:50px}.cpmid .v{font-size:22px}
+  .scroll>.board.solo{min-height:104px}
+  .scroll>.board:not(.solo){min-height:140px}
+}
+@media (max-height:600px){
+  .top.tight{min-height:40px}.brand{font-size:19px}
+  .scroll{padding:8px 16px;gap:6px}
+  .trk button{min-height:34px}
+  .scr{padding:6px 8px;gap:4px}.scr-h .v{font-size:20px}.scr-h div[style*="font:600 15px"]{font-size:13px!important}
+  .scr-b button{height:38px;font-size:14px}
+  .deck .btn,.deck .btn2{min-height:40px}
+  .cpbar{height:44px}.cpmid .v{font-size:19px}.cpmid .lbl{font-size:9px}
+  .scroll>.board.solo{min-height:92px}
+  .scroll>.board:not(.solo){min-height:128px}
+  .board:not(.solo) .meta{font-size:12px}
+}
 
 /* modals: centred bracketed panel over a blurred scrim, opening with PhosphorDice's guide flicker */
 .overlay{justify-content:center;align-items:center;padding:24px 16px;background:rgba(1,6,4,.8);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
