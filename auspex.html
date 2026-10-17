@@ -116,8 +116,8 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .uplink{flex:none;font:700 10px/1 var(--mono);letter-spacing:.06em;color:var(--accent);white-space:nowrap;text-align:right}
 .up-short{display:none}
 @container (max-width:219px){.up-long{display:none}.up-short{display:inline}}
-.uplink>span{display:inline-block;animation:uplink 1.6s steps(1) infinite}
-@keyframes uplink{0%{opacity:.2}12%{opacity:.7}24%{opacity:.35}36%{opacity:1}62%{opacity:.55}74%{opacity:1}88%{opacity:.4}}
+.uplink>span{display:inline-block;animation:uplink 1.6s ease-in-out infinite}
+@keyframes uplink{0%,100%{opacity:.15}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.uplink>span{animation:none;opacity:.8}}
 .board:not(.solo) .bstrip{grid-column:1/-1}
 .board{grid-template-rows:minmax(0,1fr) auto}   /* spare height goes to the score, never the strip */
