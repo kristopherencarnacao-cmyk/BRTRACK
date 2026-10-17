@@ -104,6 +104,9 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
+.board.solo{grid-template-columns:1fr}
+.board.solo .side{align-items:center;text-align:center;padding:14px}
+.board.solo .vp{font-size:72px}
 .readybtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--accent);border-color:var(--accent)}
 .readybtn .rb-main{display:flex;align-items:center;gap:6px}
 .readybtn .rb-sub{font:500 12px var(--sans);opacity:.85}
@@ -198,7 +201,7 @@ const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, army:'
   confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
   sheet:null, editRound:null, last:null, joinErr:'', code:'', lefty:false });
 let G, dev = 0, wake = null;
-var newGame = function(){ G = { host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, conceded:null, concedeRound:null, players:[freshPlayer(), freshPlayer()] }; }
+var newGame = function(){ G = { solo:null, host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, conceded:null, concedeRound:null, players:[freshPlayer(), freshPlayer()] }; }
 const CONCEDE_MS = 5000;
 let SEEN = [false, false];   // per device: has this player finished or skipped onboarding?
 const _newGame = newGame;
@@ -240,7 +243,7 @@ const UNDO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke
 // undo: pass the player to show it; disabled when there is nothing this round to undo
 const undoBtn = P => { const L = P.history[P.history.length - 1];
   return `<button type="button" class="icon" data-act="undo" ${L ? `aria-label="Undo ${LABEL[L.key]} ${signed(L.d)}" title="Undo ${LABEL[L.key]} ${signed(L.d)}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}</button>`; };
-const icons = (menu = true) => `<div style="display:flex;gap:2px"><button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
+const icons = (menu = true) => `<div style="display:flex;gap:2px">${G.solo === null ? `<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>` : ''}${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
   <button type="button" class="minus" data-act="bump" data-arg="${key}:-1:${r}" aria-label="Remove one ${title}">−</button>
@@ -295,6 +298,9 @@ const SLIDES = [
       <text x="140" y="84" class="huge">12</text><text x="180" y="84" class="huge dim">9</text>` },
 ];
 
+// single mode: one big personal scoreboard, no opponent
+const soloBoard = P => `<div class="board solo"><div class="side"><span class="lbl">Your score</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div></div>`;
+
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
   let h = '';
@@ -312,7 +318,7 @@ function playerView(i){
       break; }
     case 'start':
       h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px">ScoreHammer</h1><p>Live 40K scoring, synced between both players.</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
-        + foot(b('Host a game','host'), b('Join a game','join','btn2'));
+        + foot(b('Host a game','host'), b('Join a game','join','btn2'), b('Single mode','solo','btn2'));
       break;
     case 'host':
       h = bar('','Have your opponent scan')
@@ -351,24 +357,26 @@ function playerView(i){
       break; }
     case 'round': {
       const r = P.round - 1, waiting = P.roundDone, nextLbl = P.round < 5 ? `BR${P.round + 1}` : 'end-of-game scoring';
+      const solo = G.solo !== null;
       const slot = flash
-        || (!waiting && O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} is ready. Tap End battle round ${P.round} to start ${nextLbl}.</span></div>` : '');
+        || (!solo && !waiting && O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} is ready. Tap End battle round ${P.round} to start ${nextLbl}.</span></div>` : '');
       // header holds actions only; the round track below is the visible round indicator
       h = undone + `<div class="top tight">${undoBtn(P)}<h2 class="sr">Battle round ${P.round} of 5</h2>${icons()}</div>`
         + `<div class="scroll">
            ${track(P)}
-           <div class="board">
+           ${solo ? soloBoard(P) : `<div class="board">
              <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>
-           </div>
+           </div>`}
            <div class="deck">
              ${slot}
              ${scorer('Primary', P.prim[r], `Total ${sum(P.prim)}`, 'prim')}
              ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
-             ${waiting
+             ${solo ? b(P.round < 5 ? `End battle round ${P.round}` : 'End battle round 5','endRound','btn2')
+               : waiting
                ? `<button type="button" class="btn readybtn" data-act="unendRound" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
                : b(`End battle round ${P.round}`,'endRound', O.roundDone ? 'btn' : 'btn2','aria-pressed="false"')}
-             ${b(P.round < 5 ? `Force advance to BR${P.round + 1} (dev)` : 'Force advance to final scoring (dev)','forceAdvance','devbtn')}
+             ${solo ? '' : b(P.round < 5 ? `Force advance to BR${P.round + 1} (dev)` : 'Force advance to final scoring (dev)','forceAdvance','devbtn')}
            </div></div>`
         // CP lives in the pinned footer: the most-tapped control, always in thumb reach
         + foot(cpBar(P));
@@ -377,8 +385,8 @@ function playerView(i){
       h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<h2 style="font-size:clamp(16px,5vw,20px);white-space:nowrap;margin:0">Final scoring</h2></div>${icons()}</div>`
         + `<div class="scroll">
            ${track(P, true)}
-           <div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
-             <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>
+           ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
+             <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>`}
            <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
            <div class="deck">
              ${flash}
@@ -388,6 +396,16 @@ function playerView(i){
         + foot(b('Finish game','finish'));
       break;
     case 'results': {
+      if (G.solo !== null) {   // single mode: your own breakdown only
+        const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${P.prim[n-1]}</td><td>${P.sec[n-1]}</td><td>${roundPts(P, n-1)}</td></tr>`).join('')
+          + `<tr><td>End of game</td><td>${P.postP}</td><td>${P.postS}</td><td>${P.postP + P.postS}</td></tr>`;
+        h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">Final score</h2></div>
+           <div class="scroll">
+           ${soloBoard(P)}
+           <div class="card" style="padding:6px 16px;overflow-x:auto"><table><thead><tr><th>Round</th><th>Pri</th><th>Sec</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table></div></div>`
+          + foot(b('New game','newGame'));
+        break;
+      }
       const both = O.done, me = total(P), them = total(O);
       const conceded = G.conceded !== null;
       const outcome = conceded ? (G.conceded === i ? 'Defeat' : 'Victory') : !both ? 'Waiting for opponent' : me > them ? 'Victory' : me < them ? 'Defeat' : 'Draw';
@@ -420,7 +438,12 @@ function playerView(i){
   // sheets: everything secondary slides up from the bottom, so it opens and closes in the thumb zone
   const r = P.round - 1;
   switch (P.sheet){
-    case 'menu': h += sheet(`<div class="lbl">Menu</div>
+    case 'menu': h += G.solo !== null ? sheet(`<div class="lbl">Menu</div>
+        <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
+        <div class="sep"></div>
+        ${b('Start over…','sheet','btn2','data-arg="soloRestart"')}
+        ${b('Exit to start…','sheet','btn2 danger','data-arg="soloExit"')}
+        <div class="sep"></div>${b('Close','closeSheet')}`) : sheet(`<div class="lbl">Menu</div>
         ${b('Invite spectators','sheet','btn2','data-arg="share"')}
         <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
         <div class="sep"></div>
@@ -438,6 +461,10 @@ function playerView(i){
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
         ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
+    case 'soloRestart': h += sheet(`<h2>Start over?</h2><p>All scores and CP are cleared and you go back to battle round 1.</p>
+        ${b('Start over','soloRestart','btn2 danger')}${b('Keep scoring','closeSheet')}`); break;
+    case 'soloExit': h += sheet(`<h2>Exit to the start screen?</h2><p>This game’s scores won’t be saved.</p>
+        ${b('Exit','newGame','btn2 danger')}${b('Keep scoring','closeSheet')}`); break;
     case 'concede': {
       const left = Math.ceil((CONCEDE_MS - (Date.now() - P.concedeAt)) / 1000);
       h += sheet(`<h2>Are you sure you want to concede?</h2>
@@ -447,11 +474,18 @@ function playerView(i){
       const e = P.editRound - 1;
       h += sheet(`<h2>Fix battle round ${P.editRound}</h2>
         <div class="deck" style="margin-top:0">${scorer('Primary', P.prim[e], '', 'prim', P.editRound)}${scorer('Secondary', P.sec[e], '', 'sec', P.editRound)}</div>
-        <p style="font-size:13px">Changes sync to your opponent straight away.</p>${b('Done','closeSheet')}`); break; }
+        ${G.solo === null ? '<p style="font-size:13px">Changes sync to your opponent straight away.</p>' : ''}${b('Done','closeSheet')}`); break; }
   }
   if (G.restartReq === o && P.screen !== 'expired')
     h += sheet(`<h2>${nm(o)} wants to restart the match</h2><p>All scores and setup will be cleared for both players.</p>${b('Decline','decline','btn2')}${b('Agree and restart','agree')}`, null);
   return h;
+}
+
+function soloElsewhere(){
+  return `<div class="scroll center"><div class="ph" style="width:68px;height:68px;border-radius:34px">SOLO</div>
+    <h2>${dev === 2 ? 'Nothing to watch' : 'Not in this game'}</h2>
+    <p>Player ${G.solo + 1} is tracking their own score in single mode, so there’s no live game to ${dev === 2 ? 'follow' : 'join'}.</p>
+    <div class="proto" style="max-width:360px"><div class="lbl">Prototype</div><p>Use Reset to start a two-player game.</p></div></div>`;
 }
 
 function spectatorView(){
@@ -490,7 +524,8 @@ function render(){
   const pageY = window.scrollY;
   const f = document.activeElement && app.contains(document.activeElement) ? document.activeElement : null;
   const focusSel = same && f && f.dataset.act ? `[data-act="${f.dataset.act}"]${f.dataset.arg ? `[data-arg="${f.dataset.arg}"]` : ''}` : (same && f && f.id ? '#' + f.id : null);
-  app.innerHTML = dev === 2 ? spectatorView() : playerView(dev);
+  const soloOther = G.solo !== null && dev !== G.solo;
+  app.innerHTML = soloOther ? soloElsewhere() : dev === 2 ? spectatorView() : playerView(dev);
   if (same) {
     const sc = app.querySelector('.scroll'); if (sc && scrollTop) sc.scrollTop = scrollTop;
     const sh = app.querySelector('.sheet'); if (sh && sheetTop) sh.scrollTop = sheetTop;
@@ -556,7 +591,17 @@ function act(a, arg){
       P.undone = L; P.last = null; break; }
     case 'forceAdvance': O.roundDone = true;   // dev shortcut: mark the opponent ready, then end this player's round
     // falls through
+    case 'solo':   // single mode: no name, no connection; straight to battle round 1
+      newGame(); G.solo = i;
+      Object.assign(G.players[i], { screen:'round', name:'You', lefty:P.lefty }); break;
+    case 'soloRestart': { const p = G.players[i]; Object.assign(p, freshPlayer('You'), { screen:'round', lefty:p.lefty }); break; }
     case 'endRound':
+      if (G.solo !== null) {   // nobody to wait for: advance now
+        P.sheet = null; P.last = null; P.history = []; P.undone = null;
+        if (P.round < 5) { P.round++; P.flash = { text:`Battle round ${P.round} has started`, t:Date.now() }; }
+        else { P.screen = 'post'; P.flash = null; }
+        setTimeout(render, TOAST_MS + 50); break;
+      }
       P.sheet = null; P.last = null; P.roundDone = true;
       if (O.roundDone) G.players.forEach(p => {   // both done: advance together
         p.roundDone = false; p.last = null; p.history = []; p.undone = null; if (p.sheet === 'endRound') p.sheet = null;
@@ -565,7 +610,7 @@ function act(a, arg){
       });
       setTimeout(render, TOAST_MS + 50); break;
     case 'unendRound': P.roundDone = false; break;
-    case 'finish': P.done = true; P.screen = 'results'; P.last = null; if (O.done) G.endedAt = Date.now(); break;
+    case 'finish': P.done = true; P.screen = 'results'; P.last = null; if (O.done && G.solo === null) G.endedAt = Date.now(); break;
     case 'restart': P.sheet = null; P.prev = P.screen; G.restartReq = i; P.screen = 'restartWait'; break;
     case 'cancelRestart': G.restartReq = null; P.screen = P.prev; break;
     case 'agree': {
