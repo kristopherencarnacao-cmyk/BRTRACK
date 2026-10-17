@@ -104,6 +104,9 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
+.readybtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--accent);border-color:var(--accent)}
+.readybtn .rb-main{display:flex;align-items:center;gap:6px}
+.readybtn .rb-sub{font:500 12px var(--sans);opacity:.85}
 .dg{width:min(260px,100%);height:auto;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dg .acc,.dg .acc *{stroke:var(--accent)}
 .dg .fill{fill:var(--ink)}
@@ -226,6 +229,7 @@ function status(p){
   return p.roundDone ? `Finished BR${p.round}` : `Scoring BR${p.round}`;
 }
 const opts = (list, val, empty) => `<option value="">${empty}</option>` + list.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('');
+const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
 const BACK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
 // header: optional back button (an action name), optional eyebrow, title, right-side icons
 const bar = (eyebrow, title, right = '', back = '') => `<div class="top"${back ? ' style="padding-left:6px"' : ''}><div style="display:flex;align-items:center;gap:4px;min-width:0">${back ? `<button type="button" class="icon" data-act="${back}" aria-label="Back">${BACK}</button>` : ''}<div style="min-width:0">${eyebrow ? `<div class="lbl">${eyebrow}</div>` : ''}<h2>${title}</h2></div></div>${right}</div>`;
@@ -359,9 +363,7 @@ function playerView(i){
     case 'round': {
       const r = P.round - 1, waiting = P.roundDone, nextLbl = P.round < 5 ? `BR${P.round + 1}` : 'end-of-game scoring';
       const slot = flash
-        || (waiting ? `<div class="banner" role="status"><span>You’ve ended BR${P.round}. Waiting for ${nm(o)}…</span><button type="button" class="link" style="padding:0 4px;min-height:44px" data-act="unendRound">Not done</button></div>`
-        : O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} has ended BR${P.round}. End yours to start ${nextLbl}.</span></div>`
-        : '');
+        || (!waiting && O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} is ready. Tap End battle round ${P.round} to start ${nextLbl}.</span></div>` : '');
       // header holds actions only; the round track below is the visible round indicator
       h = undone + `<div class="top tight">${undoBtn(P)}<h2 class="sr">Battle round ${P.round} of 5</h2>${icons()}</div>`
         + `<div class="scroll">
@@ -374,8 +376,9 @@ function playerView(i){
              ${slot}
              ${scorer('Primary', P.prim[r], `Total ${sum(P.prim)}`, 'prim')}
              ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
-             ${waiting ? b(`Waiting for ${nm(o)} to end BR${P.round}…`,'noop','btn','disabled')
-                       : b(`End battle round ${P.round}`,'sheet', O.roundDone ? 'btn' : 'btn2','data-arg="endRound"')}
+             ${waiting
+               ? `<button type="button" class="btn readybtn" data-act="unendRound" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
+               : b(`End battle round ${P.round}`,'endRound', O.roundDone ? 'btn' : 'btn2','aria-pressed="false"')}
              ${b('Concede','sheet','btn2 danger','data-arg="concede"')}
              ${b(P.round < 5 ? `Force advance to BR${P.round + 1} (dev)` : 'Force advance to final scoring (dev)','forceAdvance','devbtn')}
            </div></div>`
@@ -446,15 +449,6 @@ function playerView(i){
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
         ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
-    case 'endRound': {
-      const last = P.round === 5, next = last ? 'end-of-game scoring' : `battle round ${P.round + 1}`;
-      h += sheet(`<h2>Are you sure you want to end battle round ${P.round}?</h2>
-        <div class="card" style="display:flex;flex-direction:column;gap:6px">
-          <div style="display:flex;justify-content:space-between"><span class="meta">Primary</span><strong>${signed(P.prim[r])}</strong></div>
-          <div style="display:flex;justify-content:space-between"><span class="meta">Secondary</span><strong>${signed(P.sec[r])}</strong></div>
-          <div style="display:flex;justify-content:space-between"><span class="meta">Round total</span><strong>${signed(roundPts(P, r))}</strong></div></div>
-        <p style="font-size:13px">${O.roundDone ? `${nm(o)} is ready, so ${next} starts as soon as you confirm.` : `Both players move to ${next} together, once ${nm(o)} ends BR${P.round} too.`} You can still fix this round later from the round track.</p>
-        ${b('Cancel','closeSheet','btn2')}${b(`Yes, end battle round ${P.round}`,'endRound')}`); break; }
     case 'concede': {
       const left = Math.ceil((CONCEDE_MS - (Date.now() - P.concedeAt)) / 1000);
       h += sheet(`<h2>Are you sure you want to concede?</h2>
