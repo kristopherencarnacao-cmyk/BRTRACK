@@ -107,8 +107,14 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 body:not(.dev) .devbar,body:not(.dev) .devbtn{display:none!important}
 body:not(.dev) .phone{height:min(780px,calc(100dvh - 40px))}
 .board.solo{grid-template-columns:1fr}
-.board.solo .side{align-items:center;text-align:center;padding:14px}
-.board.solo .vp{font-size:72px}
+.board.solo .side.sb{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:12px;padding:12px 16px 14px}
+.sb-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.board.solo .vp{font-size:min(64px,20cqi);white-space:nowrap}
+.sb-main .lbl,.stat .lbl{white-space:nowrap}
+.stats{display:flex;gap:16px;justify-content:flex-end;flex:none}
+@media (max-width:350px){.stats{gap:12px}}
+.stat{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:2ch}
+.stat .big{font:700 min(32px,10cqi)/1 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
 .readybtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--accent);border-color:var(--accent)}
 .readybtn .rb-main{display:flex;align-items:center;gap:6px}
 .readybtn .rb-sub{font:500 12px var(--sans);opacity:.85}
@@ -290,7 +296,10 @@ const SLIDES = [
 ];
 
 // single mode: one big personal scoreboard, no opponent
-const soloBoard = P => `<div class="board solo"><div class="side"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div></div>`;   // CP lives only in the footer bar
+const priTot = P => sum(P.prim) + P.postP, secTot = P => sum(P.sec) + P.postS;
+const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${v}</span></div>`;
+// readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
+const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>`;
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
@@ -356,13 +365,13 @@ function playerView(i){
         + `<div class="scroll">
            ${track(P)}
            ${solo ? soloBoard(P) : `<div class="board">
-             <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
+             <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>
            </div>`}
            <div class="deck">
              ${slot}
-             ${scorer('Primary', P.prim[r], `Total ${sum(P.prim)}`, 'prim')}
-             ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
+             ${scorer('Primary', P.prim[r], '', 'prim')}
+             ${scorer('Secondary', P.sec[r], '', 'sec')}
              ${solo ? b(P.round < 5 ? `End battle round ${P.round}` : 'End battle round 5','endRound','btn2')
                : waiting
                ? `<button type="button" class="btn readybtn" data-act="unendRound" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
@@ -376,7 +385,7 @@ function playerView(i){
       h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<h2 style="font-size:clamp(16px,5vw,20px);white-space:nowrap;margin:0">Final scoring</h2></div>${icons()}</div>`
         + `<div class="scroll">
            ${track(P, true)}
-           ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
+           ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>`}
            <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
            <div class="deck">
