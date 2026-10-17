@@ -810,7 +810,7 @@ function playerView(i){
         + foot(`<div style="display:flex;gap:8px">${k ? b('Back','obBack','btn2','style="flex:1"') : ''}${b(last ? 'Get started' : 'Next', last ? 'obDone' : 'obNext','btn','style="flex:2"')}</div>`);
       break; }
     case 'start':
-      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px">ScoreHammer</h1><p class="hint">Track your score · round by round</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
+      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px;text-transform:none">BrTRACKER</h1><p class="hint">Track your score · round by round</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
         + foot(b('Single mode','solo'), ...(document.body.classList.contains('dev') ? [b('Host a game','host','btn2'), b('Join a game','join','btn2')] : []))   // two-player mode is dev-only for now;
       break;
     case 'host':
