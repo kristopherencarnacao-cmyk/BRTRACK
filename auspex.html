@@ -531,6 +531,8 @@ html[data-accent="orange"]{--accent:#ff8f3f;--seal-hi:#ffbd8a;--phos-deep:#c25a1
 /* menu button: bracketed text button in the header */
 .mbtn{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:0;background:transparent;color:var(--accent);font:600 11px/1 var(--term);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s,box-shadow .15s,border-color .15s;margin-right:4px}
 .mbtn{position:relative;z-index:31}
+.scr-t{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.maxtag{font:700 11px/1 var(--term);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 8px var(--gold-glow)}
 .post-intro{display:flex;flex-direction:column;gap:4px}
 .post-intro h3{margin:0;font:700 13px/1.2 var(--term);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);text-shadow:0 0 8px var(--glow-soft)}
 .post-intro p{margin:0}
@@ -630,8 +632,11 @@ newGame();
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sum = a => a.reduce((x, y) => x + y, 0);
-const total = p => sum(p.prim) + sum(p.sec) + p.postP + p.postS;
-const roundPts = (p, r) => p.prim[r] + p.sec[r];
+// each battle round, Primary and Secondary count for at most 15 VP each. The panels still show everything tapped in;
+// only the capped amount reaches the scoreboard, totals and results. End-of-game scoring is not capped
+const CAP = 15, cap = v => Math.min(CAP, v), capSum = a => sum(a.map(cap));
+const total = p => capSum(p.prim) + capSum(p.sec) + p.postP + p.postS;
+const roundPts = (p, r) => cap(p.prim[r]) + cap(p.sec[r]);
 const nm = i => esc(G.players[i].name.trim() || `Player ${i + 1}`);
 const dets = p => [p.det1, p.det2, p.det3].map(x => x.trim()).filter(Boolean).join(' + ');
 // army details are optional: show only what was entered, else a quiet fallback
@@ -721,8 +726,9 @@ const track = (P, final = false) => G.solo !== null ? soloTrack(P, final) : `<di
 
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
 const scorer = (title, value, sub, key, r = '') => { const pd = pendFor(VIEWP, key, r), left = pendLeft(VIEWP);
+  const maxed = (key === 'prim' || key === 'sec') && value + pd >= CAP;   // pending taps count, so the tag shows as soon as you hit 15
   return `<div class="scr">
-  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div>${pd ? `<button type="button" class="pend${pd < 0 ? ' neg' : ''}" data-act="commitNow" aria-label="Add ${signed(pd)} ${title} now">${signed(pd)}</button>` : ''}<div class="v">${idle(value)}</div></div>
+  <div class="scr-h"><div style="min-width:0"><div class="scr-t" style="font:600 15px var(--sans)">${title}${maxed ? `<span class="maxtag">Max ${CAP}<span class="sr"> reached, extra points don't count</span></span>` : ''}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div>${pd ? `<button type="button" class="pend${pd < 0 ? ' neg' : ''}" data-act="commitNow" aria-label="Add ${signed(pd)} ${title} now">${signed(pd)}</button>` : ''}<div class="v">${idle(value)}</div></div>
   <div class="scr-b">${[-1,1,2,3,4,5].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`; };
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
@@ -749,7 +755,7 @@ const SLIDES = [
 ];
 
 // single mode: one big personal scoreboard, no opponent
-const priTot = P => sum(P.prim) + P.postP, secTot = P => sum(P.sec) + P.postS;
+const priTot = P => capSum(P.prim) + P.postP, secTot = P => capSum(P.sec) + P.postS;
 const idle = v => v === 0 ? '--' : v;   // spec: "--" is the empty/idle value
 const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${idle(v)}</span></div>`;
 // readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
@@ -856,7 +862,7 @@ function playerView(i){
       break;
     case 'results': {
       if (G.solo !== null) {   // single mode: your own breakdown only
-        const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${P.prim[n-1]}</td><td>${P.sec[n-1]}</td><td>${roundPts(P, n-1)}</td></tr>`).join('')
+        const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${cap(P.prim[n-1])}</td><td>${cap(P.sec[n-1])}</td><td>${roundPts(P, n-1)}</td></tr>`).join('')
           + `<tr><td>End of game</td><td>${P.postP}</td><td>${P.postS}</td><td>${P.postP + P.postS}</td></tr>`;
         h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">Final score</h2></div>
            <div class="scroll">
@@ -906,7 +912,7 @@ function playerView(i){
     case 'opp': h += sheet(`<h2>${nm(o)}</h2><div class="meta">${status(O)}</div>
         <p>${listInfo(O)}</p>
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
-        ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
+        ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${cap(O.prim[n-1])}</td><td>${cap(O.sec[n-1])}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
     case 'soloRestart': h += sheet(`<h2>Start over?</h2><p>All scores and CP are cleared and you go back to battle round 1.</p>
         ${b('Start over','soloRestart','btn2 danger')}${b('Keep scoring','closeSheet')}`); break;
