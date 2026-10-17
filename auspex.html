@@ -346,6 +346,26 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 .tick{animation:tick .4s steps(5) both}
 @keyframes tick{0%{opacity:.15}20%{opacity:1}40%{opacity:.45}60%{opacity:1}80%{opacity:.7}100%{opacity:1}}
 /* sheets rise with a signal flicker, the scrim fades in behind */
+/* app title: PhosphorDice's eyebrow, phosphor glow and blinking block cursor */
+.brand{cursor:pointer;-webkit-user-select:none;user-select:none;padding-left:10px;font:700 24px/1 var(--term);letter-spacing:.16em;color:var(--accent);
+  text-shadow:0 0 12px var(--glow),0 0 2px rgba(var(--rgb),.8);white-space:nowrap}
+.brand .cursor{display:inline-block;width:.55em;height:.9em;margin-left:.2em;background:var(--accent);vertical-align:-.1em;box-shadow:0 0 8px var(--glow);animation:blink 1.1s steps(1) infinite}
+@media (max-width:380px){.brand{font-size:20px;letter-spacing:.12em}}
+@media (prefers-reduced-motion:reduce){.brand .cursor{animation:none}}
+.top.tight{min-height:52px}
+
+/* scoreboard: Primary and Secondary totals sit at the top, Undo below them */
+.board.solo .side.sb{align-items:stretch}
+.sb-main{justify-content:space-between}
+.sb-aside{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:10px;flex:none}
+.undo{height:32px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;flex:none;background:transparent;border:1px solid var(--line);border-radius:0;
+  color:var(--accent);font:600 11px/1 var(--term);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .15s,box-shadow .15s,border-color .15s}
+.undo svg{width:14px;height:14px}
+.undo:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 12px var(--glow-soft)}
+.undo:active:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
+.undo:disabled{opacity:.35;cursor:default}
+.board:not(.solo) .undo{align-self:flex-start;margin-top:8px}
+
 /* modals: centred bracketed panel over a blurred scrim, opening with PhosphorDice's guide flicker */
 .overlay{justify-content:center;align-items:center;padding:24px 16px;background:rgba(1,6,4,.8);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .sheet{width:min(100%,420px);max-height:100%;border:1px solid var(--line);--bk:16px;padding:18px 18px 16px;
@@ -456,7 +476,9 @@ const sheet = (inner, close = 'closeSheet') => `<div class="overlay" ${close ? `
 const UNDO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
 // undo: pass the player to show it; disabled when there is nothing this round to undo
 const undoBtn = P => { const L = P.history[P.history.length - 1];
-  return `<button type="button" class="icon" data-act="undo" ${L ? `aria-label="Undo ${LABEL[L.key]} ${signed(L.d)}" title="Undo ${LABEL[L.key]} ${signed(L.d)}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}</button>`; };
+  return `<button type="button" class="undo" data-act="undo" ${L ? `aria-label="Undo ${LABEL[L.key]} ${signed(L.d)}" title="Undo ${LABEL[L.key]} ${signed(L.d)}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}<span aria-hidden="true">Undo</span></button>`; };
+// the app title, styled and animated like PhosphorDice's; tapping it sets off the cable spark
+const brand = `<div class="brand" aria-hidden="true">BrTRACK<span class="cursor"></span></div>`;
 const icons = (menu = true) => `<div style="display:flex;gap:2px">${G.solo === null ? `<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>` : ''}${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
@@ -514,7 +536,7 @@ const SLIDES = [
 const priTot = P => sum(P.prim) + P.postP, secTot = P => sum(P.sec) + P.postS;
 const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${v}</span></div>`;
 // readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
-const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>`;
+const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div>${undoBtn(P)}</div></div></div>`;
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
@@ -579,11 +601,11 @@ function playerView(i){
       const slot = flash
         || (!solo && !waiting && O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} is ready. Tap End battle round ${P.round} to start ${nextLbl}.</span></div>` : '');
       // header holds actions only; the round track below is the visible round indicator
-      h = undone + `<div class="top tight">${undoBtn(P)}<h2 class="sr">Battle round ${P.round} of 5</h2>${icons()}</div>`
+      h = undone + `<div class="top tight">${brand}<h2 class="sr">Battle round ${P.round} of 5</h2>${icons()}</div>`
         + `<div class="scroll">
            ${track(P)}
            ${solo ? soloBoard(P) : `<div class="board">
-             <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
+             <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span>${undoBtn(P)}</div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>
            </div>`}
            <div class="deck">
@@ -600,10 +622,10 @@ function playerView(i){
         + foot(cpBar(P));
       break; }
     case 'post':
-      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<h2 style="font-size:clamp(16px,5vw,20px);white-space:nowrap;margin:0">Final scoring</h2></div>${icons()}</div>`
+      h = undone + `<div class="top tight">${brand}<h2 class="sr">Final scoring</h2>${icons()}</div>`
         + `<div class="scroll">
            ${track(P, true)}
-           ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
+           ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span>${undoBtn(P)}</div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>`}
            <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
            <div class="deck">
@@ -985,7 +1007,7 @@ function spray(fx, k){
   }
 }
 // tapping the title sets it off on demand, as in PhosphorDice
-app.addEventListener('click', e => { if (e.target.closest('h1')) cableSpark(); });
+app.addEventListener('click', e => { if (e.target.closest('h1,.brand')) cableSpark(); });
 setTimeout(() => { cableSpark(); (function again(){ setTimeout(() => { cableSpark(); again(); }, 60000 + Math.random()*60000); })(); }, 3000 + Math.random()*9000);
 </script>
 </body>
