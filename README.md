@@ -30,7 +30,7 @@ The dev-only controls are hidden by default. Add `#dev` to the end of the URL (f
 Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 
 - **How it works:** a single page with a simple diagram explaining solo scoring (VP, +1–5 buttons, round track, CP). It opens only from "How it works" on the start screen.
-- **Single mode:** a third option on the start screen for tracking just your own score. It skips setup and connecting and goes straight to battle round 1, with a single scoreboard in the PhosphorDice readout style (big VP on the left, Primary and Secondary totals on the right; CP stays in the footer bar), no opponent, no spectators, and no ready syncing: Next round advances immediately. The round track is navigation: tap any round you've reached (or FS) to go back to that round's normal page and change it. The menu offers Start over and Exit to start, and results show your own round-by-round breakdown. Your game is saved in the browser after every change and restored automatically on reopen; Exit to start or New game clears it.
+- **Single mode:** a third option on the start screen for tracking just your own score. It skips setup and connecting and goes straight to battle round 1, with a single scoreboard in the PhosphorDice readout style (big VP on the left, Primary and Secondary totals on the right, `--` until something is scored; CP stays in the footer bar), no opponent, no spectators, and no ready syncing: Next round advances immediately. The round track is navigation: tap any round you've reached (or FS) to go back to that round's normal page and change it. The menu offers Start over and Exit to start, and results show your own round-by-round breakdown. Your game is saved in the browser after every change and restored automatically on reopen; Exit to start or New game clears it.
 - **Two-player mode (hidden for now):** Host and Join are only shown with `#dev` in the URL while the app focuses on single mode. Everything below still works there.
 - **Connect:** host shows a QR code and room code; opponent scans or types the code. Wrong or missing codes show a "room not found" error.
 - **Setup (1 step):** your army (name required; army, up to three detachments and disposition optional), then tap Ready. Battle round 1 starts as soon as both players are ready; tap again to undo while waiting.
@@ -43,7 +43,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
   - **Synced rounds:** tapping End battle round puts you in a Ready state (tap again to undo). The next round starts automatically as soon as both players are ready; there's no confirmation step.
   - **Concede:** in the menu during battle rounds. A confirmation sheet keeps the Yes button locked for a 5-second countdown; conceding ends the game for both players and goes to results.
 - **End of game:** end-of-game scoring, then a results screen with a round-by-round breakdown.
-- **Menu:** invite spectators, left-handed controls, restart (the opponent must agree) and leave (ends the session for everyone).
+- **Menu:** a bracketed dropdown under the header's MENU button with Theme (six accent colours: green, cyan, blue, violet, magenta, orange, saved per device), Score delay, Left-handed, and Start over / Exit (single mode) or invite spectators, restart, concede and leave (two-player). Tap outside, the MENU button or Escape to close.
 - **Spectator:** read-only live scoreboard. When the game ends, a 5:00 countdown runs, then the link expires.
 
 ## Design notes
@@ -53,7 +53,8 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 - Destructive actions sit behind a divider and a confirmation sheet.
 - Works from 320px wide; big scores scale to fit their card.
 - Messages like "Battle round 2 has started" float over the header as a toast instead of pushing content down.
-- Follows the system light/dark theme. Keeps the screen awake during rounds where the browser allows it.
+- Follows the PhosphorDice visual spec (`DESIGN.md` in the PhosphorDice project): one phosphor accent per theme; gold and red are reserved for crit/fail meaning, so CP and the Ready state use the accent. Labels carry `// ` prefixes, hints `> `, and unscored values show `--`. Motion is stepped and brief, and off under reduced motion.
+- Keeps the screen awake during rounds where the browser allows it.
 
 ## Not yet built
 

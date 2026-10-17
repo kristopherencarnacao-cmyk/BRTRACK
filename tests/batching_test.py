@@ -12,10 +12,10 @@ with sync_playwright() as p:
     b=p.chromium.launch(); ctx=b.new_context(viewport={'width':390,'height':844}); pg=ctx.new_page(); errs=[]; pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto(f'file://{d}/{name}_b.html'); pg.evaluate("localStorage.clear()"); pg.reload()
     a=lambda s: pg.locator('#app '+s).first.click()
-    vp=lambda: int(pg.locator('#app .board .vp').inner_text())
-    tot=lambda: pg.locator('#app .stats').inner_text().replace('\n',' ')
+    vp=lambda: int(pg.locator('#app .board .vp').inner_text().replace('--','0'))
+    tot=lambda: pg.locator('#app .stats').inner_text().replace('\n',' ').replace('--','0')
     pend=lambda: [x.inner_text() for x in pg.locator('#app .pend').all()]
-    panel=lambda i: pg.locator('#app .scr-h .v').nth(i).inner_text()
+    panel=lambda i: pg.locator('#app .scr-h .v').nth(i).inner_text().replace('--','0')
     undo_lbl=lambda: pg.locator('#app [data-act=undo]').get_attribute('aria-label')
     hist=lambda: pg.evaluate("G.players[G.solo].history.length")
     a('[data-act=solo]')

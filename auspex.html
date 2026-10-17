@@ -11,6 +11,7 @@ img{max-width:100%}
 [hidden]{display:none!important}
 </style>
 <title>ScoreHammer Auspex</title>
+<script>try{var t=localStorage.getItem('scorehammer:theme');if(t&&t!=='green')document.documentElement.setAttribute('data-accent',t)}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: phone frame with a pinned footer; info at the top (glance zone), frequent controls at the bottom (thumb zone). Spectator renders wide. */
@@ -19,7 +20,7 @@ img{max-width:100%}
   /* Auspex terminal palette (from PhosphorDice / Dominatus Codex) */
   --bg:#05070a; --surface:#0e1217; --fill:#151a21; --ink:#dfe4ea; --muted:#8792a0;
   --line:#1f5a45; --soft:#232b35; --accent:#55e6a5; --accent-soft:#0b231b; --on-ink:#02140d;
-  --scrim:rgba(1,6,4,.82); --danger:#e04652; --gold:#f5c451; --seal-hi:#8af5c4; --phos-deep:#2a9d6c;
+  --scrim:color-mix(in srgb,var(--on-ink) 84%,transparent); --danger:#e04652; --gold:#f5c451; --seal-hi:#8af5c4; --phos-deep:#2a9d6c;
   --rgb:85,230,165; --rgb-hi:200,255,230; --glow:rgba(var(--rgb),.45); --glow-soft:rgba(var(--rgb),.18);
   /* every tint is mixed from the accent, so a PhosphorDice-style theme swap (cyan, violet…) recolours the whole app */
   --accent-dim:color-mix(in srgb,var(--accent) 74%,var(--bg)); --accent-mid:color-mix(in srgb,var(--accent) 88%,var(--bg));
@@ -115,8 +116,8 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .uplink{flex:none;font:700 10px/1 var(--mono);letter-spacing:.06em;color:var(--accent);white-space:nowrap;text-align:right}
 .up-short{display:none}
 @container (max-width:219px){.up-long{display:none}.up-short{display:inline}}
-.uplink>span{display:inline-block;animation:uplink 1.6s ease-in-out infinite}
-@keyframes uplink{0%,100%{opacity:.15}50%{opacity:1}}
+.uplink>span{display:inline-block;animation:uplink 1.6s steps(1) infinite}
+@keyframes uplink{0%{opacity:.2}12%{opacity:.7}24%{opacity:.35}36%{opacity:1}62%{opacity:.55}74%{opacity:1}88%{opacity:.4}}
 @media (prefers-reduced-motion:reduce){.uplink>span{animation:none;opacity:.8}}
 .board:not(.solo) .bstrip{grid-column:1/-1}
 .board{grid-template-rows:minmax(0,1fr) auto}   /* spare height goes to the score, never the strip */
@@ -269,8 +270,8 @@ h2{font-weight:700;letter-spacing:.03em}
 .icon:disabled{color:var(--soft)}
 .icon:not(:disabled):hover,.icon:not(:disabled):active{background:var(--accent-soft)}
 
-/* end-round ready state: gold "locked in" */
-.readybtn{background:var(--gold)!important;border-color:var(--gold)!important;color:var(--on-gold)!important;box-shadow:0 0 14px var(--gold-glow)!important}
+/* end-round ready state: lit accent gradient ("locked in"); gold is reserved for crits */
+.readybtn{background:linear-gradient(155deg,var(--seal-hi),var(--accent) 60%,var(--phos-deep))!important;border-color:var(--seal-hi)!important;color:var(--on-ink)!important;box-shadow:0 0 14px var(--glow)!important}
 .readybtn::before,.readybtn::after{content:none}
 
 /* round track */
@@ -461,21 +462,19 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 @media (max-height:720px){.deck>.btn,.deck>.btn2{margin-top:6px}}
 @media (max-height:600px){.deck>.btn,.deck>.btn2{margin-top:4px}}
 
-/* CP tracker: 50% taller and in PhosphorDice's crit gold; the number is the hero, a small "CP" sits inline beside it */
-.cpbar{height:90px;--cp-line:rgba(245,196,81,.35)}
-.cpbar button{border-color:var(--cp-line);color:var(--gold);font-size:24px}
-.cpbar button:hover{background:rgba(245,196,81,.08);border-color:var(--gold);box-shadow:0 0 12px var(--gold-glow)}
-.cpbar button.add{background:color-mix(in srgb,var(--gold) 12%,var(--bg));border-color:var(--cp-line);color:var(--gold);text-shadow:0 0 8px var(--gold-glow)}
-.cpbar button.add:hover{background:color-mix(in srgb,var(--gold) 20%,var(--bg));border-color:var(--gold)}
-.cpbar button:active,.cpbar button.add:active{background:var(--gold)!important;border-color:var(--gold)!important;color:var(--on-gold)!important;text-shadow:none!important}
-.cpmid{--fr:var(--gold);width:128px;flex-direction:row;align-items:baseline;justify-content:center;gap:5px;padding-top:4px;border-color:var(--gold);
-  box-shadow:inset 0 0 16px rgba(245,196,81,.10),0 0 12px rgba(245,196,81,.12);align-content:center;flex-wrap:wrap}
-.cpmid .v{margin:0;font:700 64px/1 var(--mono);color:var(--gold);text-shadow:0 0 12px var(--gold-glow),0 0 2px rgba(245,196,81,.8)}
-.cpmid .cp-u{font:700 12px/1 var(--mono);letter-spacing:.12em;color:var(--gold);opacity:.75}
+/* CP tracker: 50% taller; the number is the hero, a small "CP" sits inline beside it. Accent-coloured (gold is reserved for crits) */
+.cpbar{height:90px}
+.cpbar button{font-size:24px}
+.cpbar button:hover{box-shadow:0 0 12px var(--glow-soft)}
+.cpbar button:active,.cpbar button.add:active{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--on-ink)!important;text-shadow:none!important}
+.cpmid{width:128px;flex-direction:row;align-items:baseline;justify-content:center;gap:5px;padding-top:4px;border-color:var(--accent);
+  box-shadow:inset 0 0 16px rgba(var(--rgb),.10),0 0 12px rgba(var(--rgb),.12);align-content:center;flex-wrap:wrap}
+.cpmid .v{margin:0;font:700 64px/1 var(--mono);color:var(--accent);text-shadow:0 0 12px var(--glow),0 0 2px rgba(var(--rgb),.8)}
+.cpmid .cp-u{font:700 12px/1 var(--mono);letter-spacing:.12em;color:var(--accent);opacity:.75}
 @media (max-width:380px){.cpmid{width:112px}.cpmid .v{font-size:56px}}
 
 /* modals: centred bracketed panel over a blurred scrim, opening with PhosphorDice's guide flicker */
-.overlay{justify-content:center;align-items:center;padding:24px 16px;background:rgba(1,6,4,.8);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.overlay{justify-content:center;align-items:center;padding:24px 16px;background:var(--scrim);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .sheet{width:min(100%,420px);max-height:100%;border:1px solid var(--line);--bk:16px;padding:18px 18px 16px;
   box-shadow:inset 0 0 22px rgba(var(--rgb),.05),0 0 0 1px rgba(0,0,0,.6),0 12px 30px var(--deep-shadow)}
 .sheet .grab{display:none}
@@ -508,6 +507,59 @@ body.flicker.fast .crt-band,body.flicker.fast::after,body.flicker.fast .shell{an
   45%{opacity:.95;transform:translate(calc(var(--dx) * .55),var(--up)) scale(1)}
   100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.35)}}
 @media (prefers-reduced-motion:reduce){.tick,.overlay.enter .sheet,body.flicker .crt-band,body.flicker::after,body.flicker .shell{animation:none}.crt-glass{display:none}}
+
+/* ===== PhosphorDice design spec pass ===== */
+/* spec token names, aliased to the app's own so either works */
+:root{--brass:var(--accent);--brass-soft:var(--accent-soft);--phos-dim:var(--line);--phos-ink:var(--on-ink);--slab:var(--surface)}
+/* accent themes (Menu > Theme). Green = no attribute. Each overrides the same eight tokens */
+html[data-accent="cyan"]{--accent:#4fd8ff;--seal-hi:#a3ecff;--phos-deep:#1d8fb4;--accent-soft:#071d26;--line:#1b5266;--on-ink:#021219;--rgb:79,216,255;--rgb-hi:205,245,255}
+html[data-accent="blue"]{--accent:#7a96ff;--seal-hi:#b3c2ff;--phos-deep:#3d55c9;--accent-soft:#0d132e;--line:#2b3a7d;--on-ink:#050a20;--rgb:122,150,255;--rgb-hi:215,224,255}
+html[data-accent="violet"]{--accent:#b685ff;--seal-hi:#d8bdff;--phos-deep:#7140c9;--accent-soft:#190e2c;--line:#4b307c;--on-ink:#10051f;--rgb:182,133,255;--rgb-hi:232,215,255}
+html[data-accent="magenta"]{--accent:#ff63d4;--seal-hi:#ffa3e7;--phos-deep:#b8308f;--accent-soft:#2a0920;--line:#6e2458;--on-ink:#1d0216;--rgb:255,99,212;--rgb-hi:255,214,243}
+html[data-accent="orange"]{--accent:#ff8f3f;--seal-hi:#ffbd8a;--phos-deep:#c25a17;--accent-soft:#2a1305;--line:#6e3a17;--on-ink:#1c0b01;--rgb:255,143,63;--rgb-hi:255,224,196}
+
+/* labels read as terminal output: 10px, tracked, "// " prefix (not on the compact stat labels) */
+.lbl{font-size:10px;letter-spacing:.14em}
+.lbl:not(.stat .lbl):not(.proto .lbl)::before{content:"// ";color:var(--line)}
+.hint{font:400 10.5px/1.5 var(--term);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.hint::before{content:"> ";color:var(--accent)}
+.btn,.btn2{letter-spacing:.08em}
+.btn2:active:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
+
+/* menu button: bracketed text button in the header */
+.mbtn{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:0;background:transparent;color:var(--accent);font:600 11px/1 var(--term);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s,box-shadow .15s,border-color .15s;margin-right:4px}
+.mbtn{position:relative;z-index:31}
+.mbtn .bars{display:grid;gap:3px}.mbtn .bars i{display:block;width:12px;height:2px;background:currentColor}
+.mbtn:hover,.mbtn[aria-expanded="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 12px var(--glow-soft)}
+.mbtn:active{background:var(--accent);color:var(--on-ink)}
+/* menu: a bracketed dropdown hanging from the button, rows split by dashed rules */
+.menuov{position:absolute;inset:0;z-index:29;background:transparent}
+.menu{position:absolute;right:10px;top:56px;z-index:30;min-width:270px;max-width:calc(100% - 20px);max-height:calc(100% - 70px);overflow-y:auto;padding:4px 6px;--bk:8px;
+  border:1px solid var(--line);box-shadow:inset 0 0 22px rgba(var(--rgb),.05),0 0 0 1px rgba(0,0,0,.6),0 12px 30px var(--deep-shadow);display:flex;flex-direction:column}
+.menu.enter{animation:menuIn .22s ease-out both}
+@keyframes menuIn{0%{opacity:0;transform:translateY(-6px)}40%{opacity:.6}60%{opacity:.25}100%{opacity:1;transform:none}}
+.menu>*+*{border-top:1px dashed var(--line)}
+.m-item{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:44px;padding:12px 8px;border:0;border-radius:0;background:transparent;color:var(--ink);font:600 11.5px/1 var(--term);letter-spacing:.1em;text-transform:uppercase;text-align:left;cursor:pointer}
+.m-item:hover{background:var(--accent-soft);color:var(--accent)}
+.m-item .mv{color:var(--accent)}
+.m-item.danger{color:var(--danger)}.m-item.danger:hover{background:rgba(224,70,82,.08)}
+.m-item input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+.m-row{padding:10px 8px;display:flex;flex-direction:column;gap:8px}
+.m-row .lbl{font-size:10px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border:1px solid rgba(255,255,255,.12);border-radius:0;background:var(--c);box-shadow:inset 0 0 0 3px var(--surface);cursor:pointer;padding:0;transition:transform .15s}
+.sw:hover{transform:scale(1.08)}
+.sw[aria-pressed="true"]{border-color:var(--c);box-shadow:inset 0 0 0 3px var(--surface),0 0 10px var(--c)}
+.menu .seg button{min-height:44px;font-size:12px}
+.menu.card{width:min(300px,calc(100% - 20px));min-width:0;gap:0}
+.menu.card>*+*{border-top:1px dashed var(--line)}
+.menu .fld p{display:none}
+/* checkbox: square, lit gradient + square-capped tick when on (spec .chk) */
+.m-item input[type=checkbox]{appearance:none;-webkit-appearance:none;width:22px;height:22px;border:1px solid var(--line);background:transparent;display:grid;place-items:center;cursor:pointer;transition:border-color .15s,background .15s}
+.m-item:hover input[type=checkbox]{border-color:var(--accent);background:var(--accent-soft)}
+.m-item input[type=checkbox]:checked{background:linear-gradient(155deg,var(--seal-hi),var(--accent) 60%,var(--phos-deep));border-color:var(--seal-hi);box-shadow:0 0 10px var(--glow)}
+.m-item input[type=checkbox]:checked::after{content:"";width:12px;height:12px;background:var(--on-ink);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
+@media (prefers-reduced-motion:reduce){.menu.enter{animation:none}.sw{transition:none}}
 </style>
 </head>
 <body>
@@ -537,7 +589,22 @@ const TIMER_MS = 5 * 60 * 1000, TOAST_MS = 4000;
 let BATCH_MS = 3000;   // score taps gather into one batch that commits this long after the last tap (CP is instant)
 const BATCH_KEY = 'scorehammer:batchMs', BATCH_OPTS = [[0,'Instant'],[3000,'3s'],[5000,'5s'],[10000,'10s']];
 try { const v = +localStorage.getItem(BATCH_KEY); if (BATCH_OPTS.some(([ms]) => ms === v) && localStorage.getItem(BATCH_KEY) !== null) BATCH_MS = v; } catch (e) {}
-const batchSeg = () => `<div class="fld" style="padding:6px 4px 2px"><span class="lbl">Score delay</span>
+// accent themes (PhosphorDice): saved per device, applied before first paint by the script after <title>
+const THEME_KEY = 'scorehammer:theme', THEMES = [['green','#55e6a5'],['cyan','#4fd8ff'],['blue','#7a96ff'],['violet','#b685ff'],['magenta','#ff63d4'],['orange','#ff8f3f']];
+const curTheme = () => document.documentElement.getAttribute('data-accent') || 'green';
+const themeRow = () => `<div class="m-row"><span class="lbl">Theme</span><div class="swatches" role="group" aria-label="Theme">${THEMES.map(([t, c]) =>
+  `<button type="button" class="sw" style="--c:${c}" data-act="setTheme" data-arg="${t}" aria-label="${t} theme" aria-pressed="${curTheme() === t}"></button>`).join('')}</div></div>`;
+const mItem = (label, act, arg = '', cls = '', val = '') => `<button type="button" class="m-item ${cls}" role="menuitem" data-act="${act}" ${arg ? `data-arg="${arg}"` : ''}><span>${label}</span>${val ? `<span class="mv">${val}</span>` : ''}</button>`;
+// the menu hangs from the header button as a bracketed dropdown; a transparent layer behind it closes it on any outside tap
+const menuDrop = (P, i) => `<div class="menuov" data-act="closeSheet"></div><div class="menu card" data-stop role="menu" aria-label="Menu">
+  ${themeRow()}
+  <div class="m-row">${batchSeg()}</div>
+  <label class="m-item" for="lefty${i}"><span>Left-handed</span><input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
+  ${G.solo !== null ? mItem('Start over', 'sheet', 'soloRestart', '', '›') + mItem('Exit to start', 'sheet', 'soloExit', 'danger', '›')
+    : mItem('Invite spectators', 'sheet', 'share', '', '›') + mItem('Restart match', 'restart', '', '', '›')
+      + (P.screen === 'round' ? mItem('Concede', 'sheet', 'concede', 'danger', '›') : '') + mItem('Leave match', 'sheet', 'leave', 'danger', '›')}
+  </div>`;
+const batchSeg = () => `<div class="fld" style="gap:8px"><span class="lbl">Score delay</span>
   <p style="font-size:12px;margin:0 0 4px">How long Primary and Secondary taps wait before they’re added to your score.</p>
   <div class="seg seg4" role="group" aria-label="Score delay">${BATCH_OPTS.map(([ms, l]) => `<button type="button" data-act="setBatch" data-arg="${ms}" aria-pressed="${BATCH_MS === ms}">${l}</button>`).join('')}</div></div>`;
 const LABEL = { prim:'Primary', sec:'Secondary', cp:'Command points', postP:'End-game primary', postS:'End-game secondary' };
@@ -622,7 +689,7 @@ const undoBtn = P => { const L = P.pend ? { items:pendItems(P), pending:true } :
   return `<button type="button" class="undo" data-act="undo" ${L ? `aria-label="${lbl}" title="${lbl}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}<span aria-hidden="true">Undo</span></button>`; };
 // the app title, styled and animated like PhosphorDice's; tapping it sets off the cable spark
 const brand = `<div class="brand" aria-hidden="true">BrTRACK<span class="cursor"></span></div>`;
-const icons = (menu = true) => `<div style="display:flex;gap:2px">${G.solo === null ? `<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>` : ''}${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
+const icons = (menu = true) => `<div style="display:flex;gap:2px">${G.solo === null ? `<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>` : ''}${menu ? `<button type="button" class="mbtn" data-act="${VIEWP && VIEWP.sheet === 'menu' ? 'closeSheet' : 'sheet'}" data-arg="menu" aria-haspopup="true" aria-expanded="${!!(VIEWP && VIEWP.sheet === 'menu')}"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>Menu</button>` : ''}</div>`;
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
   <button type="button" class="minus" data-act="bump" data-arg="${key}:-1:${r}" aria-label="Remove one ${title}">−</button>
@@ -650,7 +717,7 @@ const track = (P, final = false) => G.solo !== null ? soloTrack(P, final) : `<di
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
 const scorer = (title, value, sub, key, r = '') => { const pd = pendFor(VIEWP, key, r), left = pendLeft(VIEWP);
   return `<div class="scr">
-  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div>${pd ? `<button type="button" class="pend${pd < 0 ? ' neg' : ''}" data-act="commitNow" aria-label="Add ${signed(pd)} ${title} now">${signed(pd)}</button>` : ''}<div class="v">${value}</div></div>
+  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div>${pd ? `<button type="button" class="pend${pd < 0 ? ' neg' : ''}" data-act="commitNow" aria-label="Add ${signed(pd)} ${title} now">${signed(pd)}</button>` : ''}<div class="v">${idle(value)}</div></div>
   <div class="scr-b">${[-1,1,2,3,4,5].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`; };
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
@@ -678,9 +745,10 @@ const SLIDES = [
 
 // single mode: one big personal scoreboard, no opponent
 const priTot = P => sum(P.prim) + P.postP, secTot = P => sum(P.sec) + P.postS;
-const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${v}</span></div>`;
+const idle = v => v === 0 ? '--' : v;   // spec: "--" is the empty/idle value
+const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${idle(v)}</span></div>`;
 // readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
-const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>${bstrip(P)}</div>`;
+const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${idle(total(P))}</span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>${bstrip(P)}</div>`;
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
@@ -702,7 +770,7 @@ function playerView(i){
         + foot(`<div style="display:flex;gap:8px">${k ? b('Back','obBack','btn2','style="flex:1"') : ''}${b(last ? 'Get started' : 'Next', last ? 'obDone' : 'obNext','btn','style="flex:2"')}</div>`);
       break; }
     case 'start':
-      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px">ScoreHammer</h1><p>Track your 40K score round by round.</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
+      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px">ScoreHammer</h1><p class="hint">Track your score · round by round</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
         + foot(b('Single mode','solo'), ...(document.body.classList.contains('dev') ? [b('Host a game','host','btn2'), b('Join a game','join','btn2')] : []))   // two-player mode is dev-only for now;
       break;
     case 'host':
@@ -824,21 +892,7 @@ function playerView(i){
   // sheets: everything secondary slides up from the bottom, so it opens and closes in the thumb zone
   const r = P.round - 1;
   switch (P.sheet){
-    case 'menu': h += G.solo !== null ? sheet(`<div class="lbl">Menu</div>
-        <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
-        ${batchSeg()}
-        <div class="sep"></div>
-        ${b('Start over…','sheet','btn2','data-arg="soloRestart"')}
-        ${b('Exit to start…','sheet','btn2 danger','data-arg="soloExit"')}
-        <div class="sep"></div>${b('Close','closeSheet')}`) : sheet(`<div class="lbl">Menu</div>
-        ${b('Invite spectators','sheet','btn2','data-arg="share"')}
-        <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
-        ${batchSeg()}
-        <div class="sep"></div>
-        ${b('Restart match…','restart','btn2')}
-        ${P.screen === 'round' ? b('Concede…','sheet','btn2 danger','data-arg="concede"') : ''}
-        ${b('Leave match…','sheet','btn2 danger','data-arg="leave"')}
-        <div class="sep"></div>${b('Close','closeSheet')}`); break;
+    case 'menu': h += menuDrop(P, i); break;
     case 'share': h += sheet(`<div class="lbl">Invite spectators</div><div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
         <div class="ph" style="width:180px;height:180px">QR CODE</div><div><div class="lbl">Room code</div><div class="num" style="letter-spacing:.12em">${ROOM}</div></div>
         <p>Or open [short link] on a TV, tablet or phone. Spectators can’t change scores.</p></div>${b('Done','closeSheet')}`); break;
@@ -902,6 +956,10 @@ const app = document.getElementById('app'), shell = document.getElementById('she
 const DEV = location.hash === '#dev';   // add #dev to the URL to show the prototype controls
 document.body.classList.toggle('dev', DEV);
 let lastView = '';
+// hang the dropdown just under the Menu button, wherever the header puts it
+function placeMenu(){ const mn = app.querySelector('.menu'), mb = app.querySelector('.mbtn'); if (!mn || !mb) return;
+  const a = app.getBoundingClientRect(), r = mb.getBoundingClientRect();
+  mn.style.top = (r.bottom - a.top + 6) + 'px'; mn.style.right = Math.max(10, a.right - r.right) + 'px'; }
 function render(){
   document.querySelectorAll('[data-dev]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.dev === dev)));
   shell.classList.toggle('wide', dev === 2);
@@ -922,7 +980,8 @@ function render(){
   app.innerHTML = soloOther ? soloElsewhere() : dev === 2 ? spectatorView() : playerView(dev);
   if (before) app.querySelectorAll(READOUTS).forEach((x, n) => { if (n < before.length && before[n] !== x.textContent) x.classList.add('tick'); });
   // a sheet animates in only when it first opens, not on every re-draw while it is open
-  if (!same) { const ov = app.querySelector('.overlay'); if (ov) ov.classList.add('enter'); }
+  if (!same) { const ov = app.querySelector('.overlay'); if (ov) ov.classList.add('enter'); const mn = app.querySelector('.menu'); if (mn) mn.classList.add('enter'); }
+  placeMenu();
   if (same) {
     const sc = app.querySelector('.scroll'); if (sc && scrollTop) sc.scrollTop = scrollTop;
     const sh = app.querySelector('.sheet'); if (sh && sheetTop) sh.scrollTop = sheetTop;
@@ -978,6 +1037,9 @@ function act(a, arg){
     case 'unready': P.ready = false; break;
     case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
     case 'commitNow': break;   // committed above
+    case 'setTheme':
+      if (arg === 'green') document.documentElement.removeAttribute('data-accent'); else document.documentElement.setAttribute('data-accent', arg);
+      try { localStorage.setItem(THEME_KEY, arg); } catch (e) {} break;
     case 'setBatch':   // pending points are added now, then the new delay applies to the next taps
       commitAll(); BATCH_MS = +arg; try { localStorage.setItem(BATCH_KEY, String(BATCH_MS)); } catch (e) {} break;
     case 'bump': {
@@ -1057,6 +1119,7 @@ app.addEventListener('touchend', e => {
   if (swipeX === null) return; const dx = e.changedTouches[0].clientX - swipeX; swipeX = null;
   if (Math.abs(dx) > 50) act(dx < 0 ? 'obNext' : 'obBack');
 });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && dev !== 2 && G.players[dev].sheet) act('closeSheet'); });
 app.addEventListener('click', e => {
   const btn = e.target.closest('[data-act]');
   const stop = e.target.closest('[data-stop]');
