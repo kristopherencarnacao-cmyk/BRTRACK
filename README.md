@@ -17,6 +17,7 @@ The compact row above the phone holds the dev-only controls:
 - **P1 / P2 / Spectator** switch between the three simulated devices. They share one live game.
 - **Skip to BR1** jumps straight to battle round 1 with both lists confirmed.
 - **Reset** starts over.
+- **Force advance (dev)**, below End battle round, readies both players and moves straight to the next round (or final scoring after BR5).
 - Blue dashed **Prototype** boxes stand in for things a real backend would do, such as scanning a QR code or the other player responding.
 
 ## What's covered
@@ -27,7 +28,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 - **Setup (3 steps):** name (required), plus optional army, up to three detachments and disposition; both players confirm lists; attacker/defender and first turn are set together.
 - **Battle rounds 1–5:**
   - Pinned scoreboard with each player's VP and CP. Tap the opponent for their army, detachments, disposition and per-round scores.
-  - Primary and secondary scoring with −10 / −5 / −1 / +1 / +5 / +10. CP uses a −/+ stepper.
+  - Primary and secondary scoring with −10 / −5 / −1 / +1 / +5 / +10. CP sits in the pinned footer with −2 / −1 / +1 / +2.
   - Multi-step undo from the header.
   - Fix any past round from the round track.
   - **Synced rounds:** ending a round locks in your side. Both players move to the next round together once both have ended it.
