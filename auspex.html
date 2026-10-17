@@ -107,13 +107,6 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
-.pend{margin-left:auto;margin-right:10px;min-height:34px;min-width:44px;padding:0 10px;border:1.5px solid var(--accent);border-radius:999px;background:var(--accent-soft);color:var(--accent);font:700 16px var(--mono);font-variant-numeric:tabular-nums;cursor:pointer}
-.pend.neg{border-color:var(--danger);color:var(--danger);background:transparent}
-.pbar{height:3px;margin:-4px 2px -2px;border-radius:2px;overflow:hidden}
-.pbar.on{background:var(--soft)}
-.pbar i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:pdrain 3s linear both}
-@keyframes pdrain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-.vp-pend{color:var(--accent);font-weight:700;letter-spacing:0}
 .toastov{position:absolute;left:50%;top:6px;z-index:8;max-width:calc(100% - 32px);padding:10px 18px;border-radius:999px;background:var(--ink);color:var(--on-ink);font:600 14px var(--sans);
   box-shadow:0 8px 24px rgba(0,0,0,.28);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:toastov 4s ease both}
 @keyframes toastov{0%{opacity:0;transform:translate(-50%,-8px)}8%{opacity:1;transform:translate(-50%,0)}85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
@@ -310,12 +303,6 @@ td,th{border-bottom-color:var(--soft)}
 .devbtn{text-transform:uppercase;letter-spacing:.08em;font-size:11px;border-radius:0}
 
 @media (prefers-reduced-motion:reduce){body::before,h1::after{animation:none}}
-/* pending tally: a lit phosphor chip with a draining bar, like a charge meter */
-.pend{border-radius:0;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);text-shadow:0 0 8px var(--glow);box-shadow:0 0 12px var(--glow-soft)}
-.pend.neg{color:var(--danger);border-color:var(--danger);text-shadow:0 0 8px rgba(224,70,82,.45);box-shadow:none;background:rgba(224,70,82,.06)}
-.pbar{border-radius:0}.pbar.on{background:rgba(var(--rgb),.12)}
-.pbar i{box-shadow:0 0 8px var(--glow)}
-.vp-pend{text-shadow:0 0 8px var(--glow)}
 .toastov{border-radius:0;background:var(--surface);border:1px solid var(--accent);color:var(--accent);font:700 12.5px var(--term);letter-spacing:.08em;text-transform:uppercase;
   text-shadow:0 0 8px var(--glow);box-shadow:0 0 18px var(--glow-soft),0 10px 26px rgba(0,0,0,.6)}
 .toastov::before{content:"> ";opacity:.7}
@@ -505,13 +492,12 @@ const ARMIES = ['Space Marines','Necrons','Orks','Aeldari','Tyranids','Astra Mil
 const DETS = ['[Detachment A]','[Detachment B]','[Detachment C]'];
 const DISPS = ['[Disposition A]','[Disposition B]','[Disposition C]'];
 const TIMER_MS = 5 * 60 * 1000, TOAST_MS = 4000;
-let BATCH_MS = 3000;   // score taps gather into one batch that commits this long after the last tap (CP is instant)
 const LABEL = { prim:'Primary', sec:'Secondary', cp:'Command points', postP:'End-game primary', postS:'End-game secondary' };
 const QR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM21 14v3M14 21h7"/></svg>';
 const MENU = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 
 const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, maxRound:1, reachedFS:false, army:'', det1:'', det2:'', det3:'', detCount:1, disp:'',
-  confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, pend:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
+  confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
   sheet:null, editRound:null, last:null, joinErr:'', code:'', lefty:false });
 let G, dev = 0, wake = null;
 var newGame = function(){ G = { solo:null, host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, conceded:null, concedeRound:null, players:[freshPlayer(), freshPlayer()] }; }
@@ -555,37 +541,10 @@ const b = (label, act, cls = 'btn', extra = '') => `<button type="button" class=
 const sheet = (inner, close = 'closeSheet') => `<div class="overlay" ${close ? `data-act="${close}"` : ''}><div class="sheet" data-stop role="dialog" aria-modal="true"><div class="grab"></div>${inner}</div></div>`;
 const UNDO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
 // undo: pass the player to show it; disabled when there is nothing this round to undo
-<<<<<<< Updated upstream
 const undoBtn = P => { const L = P.history[P.history.length - 1];
   return `<button type="button" class="undo" data-act="undo" ${L ? `aria-label="Undo ${LABEL[L.key]} ${signed(L.d)}" title="Undo ${LABEL[L.key]} ${signed(L.d)}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}<span aria-hidden="true">Undo</span></button>`; };
 // the app title, styled and animated like PhosphorDice's; tapping it sets off the cable spark
 const brand = `<div class="brand" aria-hidden="true">BrTRACK<span class="cursor"></span></div>`;
-=======
-// ---- score batching ----
-// P.pend = { where: round number (or 'post' for end-of-game), d: { key: delta }, due: timestamp }
-// Taps on Primary/Secondary add to P.pend; 3 s after the last tap the whole batch commits as ONE undo step.
-const isRoundKey = k => k === 'prim' || k === 'sec';
-const pendItems = P => P.pend ? Object.entries(P.pend.d).filter(([, v]) => v).map(([key, d]) => ({ key, d, r: P.pend.where === 'post' ? null : P.pend.where })) : [];
-const describe = e => (e.items || [e]).map(it => `${LABEL[it.key]} ${signed(it.d)}`).join(', ');
-function commitPend(P){
-  const items = pendItems(P); P.pend = null;
-  if (!items.length) return false;
-  items.forEach(it => { if (it.r) P[it.key][it.r - 1] = Math.max(0, P[it.key][it.r - 1] + it.d); else P[it.key] = Math.max(0, P[it.key] + it.d); });
-  const entry = { items, t:Date.now() };
-  P.history.push(entry); if (P.history.length > 50) P.history.shift();
-  P.last = { key:items[0].key, d:items[0].d, r:items[0].r, t:entry.t };
-  return true;
-}
-function commitAll(){ let any = false; G.players.forEach(p => { if (p.pend) any = commitPend(p) || any; }); return any; }
-const pendFor = (P, key, r) => (P && P.pend && P.pend.where === (isRoundKey(key) ? (r ? +r : P.round) : 'post')) ? (P.pend.d[key] || 0) : 0;
-const pendLeft = P => P && P.pend ? Math.max(0, P.pend.due - Date.now()) : 0;
-const vpPend = P => { const n = pendItems(P).reduce((a, it) => a + it.d, 0); return n ? ` <b class="vp-pend">${signed(n)}</b>` : ''; };
-let VIEWP = null;   // the player whose screen is being drawn (scorer reads pending points from it)
-
-const undoBtn = P => { const L = P.pend ? { items:pendItems(P), pending:true } : P.history[P.history.length - 1];
-  const lbl = L ? `Undo ${L.pending ? 'pending ' : ''}${describe(L)}` : '';
-  return `<button type="button" class="icon" data-act="undo" ${L ? `aria-label="${lbl}" title="${lbl}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}</button>`; };
->>>>>>> Stashed changes
 const icons = (menu = true) => `<div style="display:flex;gap:2px">${G.solo === null ? `<button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>` : ''}${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
 // stepper: − small, + large; key:round lets one control target any round
 const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
@@ -612,11 +571,9 @@ const track = (P, final = false) => G.solo !== null ? soloTrack(P, final) : `<di
   : '<button type="button" disabled aria-label="Final scoring">FS</button>'}</div>`;
 
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
-const scorer = (title, value, sub, key, r = '') => { const pd = pendFor(VIEWP, key, r), left = pendLeft(VIEWP);
-  return `<div class="scr">
-  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div>${pd ? `<button type="button" class="pend${pd < 0 ? ' neg' : ''}" data-act="commitNow" aria-label="Add ${signed(pd)} ${title} now">${signed(pd)}</button>` : ''}<div class="v">${value}</div></div>
-  <div class="pbar${pd ? ' on' : ''}" aria-hidden="true">${pd ? `<i style="animation-delay:-${BATCH_MS - left}ms"></i>` : ''}</div>
-  <div class="scr-b">${[-1,1,2,3,4,5].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`; };
+const scorer = (title, value, sub, key, r = '') => `<div class="scr">
+  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div><div class="v">${value}</div></div>
+  <div class="scr-b">${[-1,1,2,3,4,5].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`;
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
 const cpBar = P => `<div class="cpbar">${[-2,-1].map(d => `<button type="button" data-act="bump" data-arg="cp:${d}:" aria-label="Remove ${-d} CP">−${-d}</button>`).join('')}
@@ -645,17 +602,12 @@ const SLIDES = [
 const priTot = P => sum(P.prim) + P.postP, secTot = P => sum(P.sec) + P.postS;
 const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${v}</span></div>`;
 // readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
-<<<<<<< Updated upstream
 const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${total(P)}</span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div>${undoBtn(P)}</div></div></div>`;
-=======
-const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score${vpPend(P)}</span><span class="vp">${total(P)}</span></div><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>`;
->>>>>>> Stashed changes
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
   let h = '';
-  VIEWP = P;
-  const undone = P.undone ? `<span class="sr" role="status">${P.undone.pending ? 'Cancelled pending' : 'Undid'} ${describe(P.undone)}</span>` : '';
+  const undone = P.undone ? `<span class="sr" role="status">Undid ${LABEL[P.undone.key]} ${signed(P.undone.d)}</span>` : '';
   // toasts float over the screen instead of taking space in the layout; the negative delay keeps the fade in step across re-draws
   const flashAge = P.flash ? Date.now() - P.flash.t : Infinity;
   const toastOv = flashAge < TOAST_MS ? `<div class="toastov" role="status" style="animation-delay:-${flashAge}ms">${esc(P.flash.text)}</div>` : '';
@@ -719,11 +671,7 @@ function playerView(i){
         + `<div class="scroll">
            ${track(P)}
            ${solo ? soloBoard(P) : `<div class="board">
-<<<<<<< Updated upstream
              <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span>${undoBtn(P)}</div>
-=======
-             <div class="side"><span class="lbl">You${vpPend(P)}</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
->>>>>>> Stashed changes
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>
            </div>`}
            <div class="deck">
@@ -743,11 +691,7 @@ function playerView(i){
       h = undone + `<div class="top tight">${brand}<h2 class="sr">Final scoring</h2>${icons()}</div>`
         + `<div class="scroll">
            ${track(P, true)}
-<<<<<<< Updated upstream
            ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span>${undoBtn(P)}</div>
-=======
-           ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You${vpPend(P)}</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
->>>>>>> Stashed changes
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>`}
            <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
            <div class="deck">
@@ -910,8 +854,6 @@ function render(){
 
 function act(a, arg){
   const i = dev, o = 1 - i, P = G.players[i], O = G.players[o];
-  // anything that leaves the round (or ends the game) commits pending points to the round they were tapped in
-  if (['goRound','endRound','forceAdvance','finish','editRound','concede','restart','commitNow'].includes(a) || (a === 'closeSheet' && P.sheet === 'edit')) commitAll();
   const both = s => G.players.forEach(p => { p.screen = s; p.sheet = null; });
   switch (a){
     case 'go': P.screen = arg; P.sheet = null; break;
@@ -951,31 +893,17 @@ function act(a, arg){
     case 'ready': if (!P.name.trim()) break; P.ready = true; if (O.ready) both('round'); break;
     case 'unready': P.ready = false; break;
     case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
-    case 'commitNow': break;   // committed above
     case 'bump': {
       const [k, ds, rs] = arg.split(':'); const d = +ds; const r = rs ? +rs : P.round;
-      if (k !== 'cp') {   // Primary / Secondary: gather into the pending batch
-        const where = isRoundKey(k) ? r : 'post';
-        if (P.pend && P.pend.where !== where) commitPend(P);   // a different round starts a new batch
-        if (!P.pend) P.pend = { where, d:{}, due:0 };
-        const base = isRoundKey(k) ? P[k][r - 1] : P[k], cur = P.pend.d[k] || 0;
-        const next = Math.max(-base, cur + d);   // never below zero once committed
-        if (next === cur) break;
-        P.pend.d[k] = next; P.pend.due = Date.now() + BATCH_MS; P.undone = null;
-        if (!pendItems(P).length) P.pend = null;   // e.g. +1 then -1: nothing pending
-        if (P.pend && BATCH_MS <= 0) commitPend(P);
-        break;
-      }
       let applied;   // the change actually made, after clamping at 0, so Undo reverses exactly that
       if (Array.isArray(P[k])) { const before = P[k][r - 1]; P[k][r - 1] = Math.max(0, before + d); applied = P[k][r - 1] - before; }
       else { const before = P[k]; P[k] = Math.max(0, before + d); applied = P[k] - before; }
       if (!applied) break;
       P.last = { key:k, d:applied, r: Array.isArray(P[k]) ? r : null, t:Date.now() };
       P.history.push(P.last); if (P.history.length > 50) P.history.shift(); P.undone = null; break; }
-    case 'undo': {   // pending points first; otherwise the last committed batch (or CP tap)
-      if (P.pend) { P.undone = { items:pendItems(P), pending:true }; P.pend = null; break; }
+    case 'undo': {   // steps back one change at a time
       const L = P.history.pop(); if (!L) break;
-      (L.items || [L]).forEach(it => { if (it.r) P[it.key][it.r - 1] = Math.max(0, P[it.key][it.r - 1] - it.d); else P[it.key] = Math.max(0, P[it.key] - it.d); });
+      if (L.r) P[L.key][L.r - 1] = Math.max(0, P[L.key][L.r - 1] - L.d); else P[L.key] = Math.max(0, P[L.key] - L.d);
       P.undone = L; P.last = null; break; }
     case 'forceAdvance': O.roundDone = true;   // dev shortcut: mark the opponent ready, then end this player's round
     // falls through
@@ -1057,11 +985,6 @@ document.getElementById('skipSetup').addEventListener('click', () => {
   render();
 });
 setInterval(() => {
-  const now = Date.now(); let due = false;
-  G.players.forEach(p => { if (p.pend && now >= p.pend.due) due = commitPend(p) || due; });
-  if (due) render();
-}, 150);
-setInterval(() => {
   if (!G.endedAt) return;
   if (dev === 2 || G.players[dev]?.screen === 'results') render();
 }, 1000);
@@ -1083,13 +1006,12 @@ function restore(){
     const p = s.G.players && s.G.players[s.G.solo];
     if (!p || !['round','post','results'].includes(p.screen)) return;
     G = s.G; dev = G.solo;
-    G.players.forEach(x => { if (x.pend) commitPend(x); });   // points pending when the app closed are kept
     G.players.forEach(x => { x.sheet = null; x.editRound = null; x.flash = null; x.undone = null; });   // reopen on a clean screen
   } catch (e) {}   // unreadable save: start fresh
 }
 // also save when the app is backgrounded (switching to the Warhammer app, locking the phone)
-addEventListener('pagehide', () => { commitAll(); save(); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { if (commitAll()) render(); save(); } });
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
 
 restore();
 render();
