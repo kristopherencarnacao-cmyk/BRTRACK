@@ -83,7 +83,7 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 /* big scores shrink with their card so three digits always fit */
 .vp{font-size:min(52px,46cqi)}
 .meta{font:500 13px var(--sans);color:var(--muted)}
-.trk{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.trk{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
 .trk button{min-height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 13px var(--mono);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-variant-numeric:tabular-nums}
 .trk button.cur{background:var(--ink);color:var(--on-ink);cursor:default}
 .trk button:disabled{border-style:dashed;color:var(--muted);background:transparent;cursor:default}
@@ -225,10 +225,13 @@ const stepper = (title, value, sub, key, r = '', short = title) => `<div class="
   <button type="button" class="plus" data-act="bump" data-arg="${key}:1:${r}" aria-label="Add one ${title}">+</button></div>`;
 
 // round track: past rounds open the fix-a-round sheet; on the post-game screen every round is fixable
-const track = (P, editAll = false) => `<div class="trk">${[1,2,3,4,5].map(n => (n === P.round && !editAll)
+// BR1–5 then FS (final scoring). On the final scoring screen FS is current and every BR is fixable
+const track = (P, final = false) => `<div class="trk">${[1,2,3,4,5].map(n => (n === P.round && !final)
   ? `<button type="button" class="cur" aria-current="step">BR${n}</button>`
-  : (n < P.round || editAll) ? `<button type="button" data-act="editRound" data-arg="${n}" aria-label="Fix battle round ${n}">BR${n}</button>`
-  : `<button type="button" disabled>BR${n}</button>`).join('')}</div>`;
+  : (n < P.round || final) ? `<button type="button" data-act="editRound" data-arg="${n}" aria-label="Fix battle round ${n}">BR${n}</button>`
+  : `<button type="button" disabled>BR${n}</button>`).join('')}${final
+  ? '<button type="button" class="cur" aria-current="step" aria-label="Final scoring">FS</button>'
+  : '<button type="button" disabled aria-label="Final scoring">FS</button>'}</div>`;
 
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
 const scorer = (title, value, sub, key, r = '') => `<div class="scr">
@@ -334,12 +337,12 @@ function playerView(i){
     case 'post':
       h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<div style="min-width:0;flex:1"><div class="lbl">After battle round 5</div><h2 style="font-size:18px;white-space:nowrap">Final scoring</h2></div></div>${icons()}</div>`
         + `<div class="scroll">
+           ${track(P, true)}
            <div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>
            <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
            <div class="deck">
-             ${flash || '<div class="lbl">Tap a round to fix it</div>'}
-             ${track(P, true)}
+             ${flash}
              ${scorer('Primary', P.postP, 'End of game', 'postP')}
              ${scorer('Secondary', P.postS, 'End of game', 'postS')}
            </div></div>`

@@ -30,7 +30,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
   - Pinned scoreboard with each player's VP and CP. Tap the opponent for their army, detachments, disposition and per-round scores.
   - Primary and secondary scoring with −10 / −5 / −1 / +1 / +5 / +10. CP sits in the pinned footer with −2 / −1 / +1 / +2.
   - Multi-step undo from the header.
-  - Fix any past round from the round track.
+  - Fix any past round from the round track (BR1–BR5, then FS for final scoring).
   - **Synced rounds:** ending a round locks in your side. Both players move to the next round together once both have ended it.
 - **End of game:** end-of-game scoring, then a results screen with a round-by-round breakdown.
 - **Menu:** invite spectators, left-handed controls, restart (the opponent must agree) and leave (ends the session for everyone).
