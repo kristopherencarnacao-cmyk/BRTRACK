@@ -334,7 +334,7 @@ var newGame = function(){ G = { solo:null, host:null, connected:false, over:fals
 const CONCEDE_MS = 5000;
 let SEEN = [false, false];   // per device: has this player finished or skipped onboarding?
 const _newGame = newGame;
-newGame = function(){ _newGame(); G.players.forEach((p, k) => { if (!SEEN[k]) p.screen = 'onboard'; }); };
+newGame = function(){ _newGame(); };   // onboarding only opens from 'How it works' on the start screen
 newGame();
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
