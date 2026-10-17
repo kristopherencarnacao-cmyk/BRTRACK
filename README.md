@@ -17,7 +17,7 @@ To host it, enable **GitHub Pages** for this repo (Settings → Pages → deploy
 
 ## Using the prototype
 
-The compact row above the phone holds the dev-only controls:
+The dev-only controls are hidden by default. Add `#dev` to the end of the URL (for example `auspex.html#dev`) to show the compact row above the phone:
 
 - **P1 / P2 / Spectator** switch between the three simulated devices. They share one live game.
 - **Skip to BR1** jumps straight to battle round 1 with both players set up.
@@ -29,7 +29,7 @@ The compact row above the phone holds the dev-only controls:
 
 Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 
-- **Onboarding:** four short cards with simple diagrams (two phones, live scoring, synced rounds, spectators). It never starts on its own; tap "How it works" on the start screen to open it. Swipe or tap Next, Skip any time.
+- **How it works:** a single page with a simple diagram explaining solo scoring (VP, +1–5 buttons, round track, CP). It opens only from "How it works" on the start screen.
 - **Single mode:** a third option on the start screen for tracking just your own score. It skips setup and connecting and goes straight to battle round 1, with a single scoreboard (your VP and CP), no opponent, no spectators, and no ready syncing: End battle round advances immediately. The menu offers Start over and Exit to start, and results show your own round-by-round breakdown.
 - **Connect:** host shows a QR code and room code; opponent scans or types the code. Wrong or missing codes show a "room not found" error.
 - **Setup (1 step):** your army (name required; army, up to three detachments and disposition optional), then tap Ready. Battle round 1 starts as soon as both players are ready; tap again to undo while waiting.
