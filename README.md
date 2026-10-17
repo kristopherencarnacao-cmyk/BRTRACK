@@ -34,7 +34,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 - **Setup (2 steps):** your army (name required; army, up to three detachments and disposition optional), then roles and first turn. Each player moves at their own pace and can go back to edit; attacker/defender and first turn are shared, and battle round 1 starts once both players are ready.
 - **Battle rounds 1–5:**
   - Pinned scoreboard with each player's VP and CP. Tap the opponent for their army, detachments, disposition and per-round scores.
-  - Primary and secondary scoring with −10 / −5 / −1 / +1 / +5 / +10. CP sits in the pinned footer with −2 / −1 / +1 / +2.
+  - Primary and secondary scoring with −1 / +1 / +2 / +3 / +4 / +5. CP sits in the pinned footer with −2 / −1 / +1 / +2.
   - Multi-step undo from the header.
   - Fix any past round from the round track (BR1–BR5, then FS for final scoring).
   - **Synced rounds:** tapping End battle round puts you in a Ready state (tap again to undo). The next round starts automatically as soon as both players are ready; there's no confirmation step.

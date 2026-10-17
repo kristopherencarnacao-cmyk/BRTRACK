@@ -127,7 +127,7 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 /* scoreboard stays pinned while the controls scroll on short phones */
 .scroll>.board{position:sticky;top:0;z-index:2;flex:none;box-shadow:0 -10px 0 var(--bg)}
 @media (max-height:760px){.vp{font-size:min(40px,40cqi)}.side{padding:8px 12px}.trk button{min-height:44px}.scr-b button{height:46px}.stp{height:60px}.scroll{gap:10px}}
-@media (max-width:360px){.scr-b{gap:4px}.scr-b button{font-size:13px}.scr-b button:nth-child(3){margin-right:4px}.lefty .scr-b button:nth-child(3){margin-left:4px}}
+@media (max-width:360px){.scr-b{gap:4px}.scr-b button{font-size:13px}.scr-b button:nth-child(1){margin-right:4px}.lefty .scr-b button:nth-child(1){margin-left:4px}}
 @media (max-width:350px){.t-long{display:none}.t-short{display:inline}}
 .scr{border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:10px;display:flex;flex-direction:column;gap:8px}
 .scr-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 4px}
@@ -136,8 +136,8 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .lefty .scr-b{flex-direction:row-reverse}
 .scr-b button{flex:1;min-width:0;height:50px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:600 16px var(--mono);cursor:pointer;padding:0}
 .scr-b button.add{background:var(--ink);color:var(--on-ink)}
-.scr-b button:nth-child(3){margin-right:6px}
-.lefty .scr-b button:nth-child(3){margin-right:0;margin-left:6px}
+.scr-b button:nth-child(1){margin-right:6px}
+.lefty .scr-b button:nth-child(1){margin-right:0;margin-left:6px}
 .icon:disabled{color:var(--soft);cursor:not-allowed}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
@@ -388,7 +388,7 @@ const track = (P, final = false) => `<div class="trk">${[1,2,3,4,5].map(n => (n 
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
 const scorer = (title, value, sub, key, r = '') => `<div class="scr">
   <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div><div class="v">${value}</div></div>
-  <div class="scr-b">${[-10,-5,-1,1,5,10].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`;
+  <div class="scr-b">${[-1,1,2,3,4,5].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`;
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
 const cpBar = P => `<div class="cpbar">${[-2,-1].map(d => `<button type="button" data-act="bump" data-arg="cp:${d}:" aria-label="Remove ${-d} CP">−${-d}</button>`).join('')}
