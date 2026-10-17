@@ -531,6 +531,9 @@ html[data-accent="orange"]{--accent:#ff8f3f;--seal-hi:#ffbd8a;--phos-deep:#c25a1
 /* menu button: bracketed text button in the header */
 .mbtn{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:0;background:transparent;color:var(--accent);font:600 11px/1 var(--term);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s,box-shadow .15s,border-color .15s;margin-right:4px}
 .mbtn{position:relative;z-index:31}
+.post-intro{display:flex;flex-direction:column;gap:4px}
+.post-intro h3{margin:0;font:700 13px/1.2 var(--term);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);text-shadow:0 0 8px var(--glow-soft)}
+.post-intro p{margin:0}
 .mbtn .bars{display:grid;gap:3px}.mbtn .bars i{display:block;width:12px;height:2px;background:currentColor}
 .mbtn:hover,.mbtn[aria-expanded="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 12px var(--glow-soft)}
 .mbtn:active{background:var(--accent);color:var(--on-ink)}
@@ -706,15 +709,15 @@ const soloTrack = (P, final) => { const max = P.reachedFS ? 5 : (P.maxRound || P
     ? `<button type="button" class="cur" aria-current="step">BR${n}</button>`
     : n <= max ? `<button type="button" data-act="goRound" data-arg="${n}" aria-label="Go to battle round ${n}">BR${n}</button>`
     : `<button type="button" disabled>BR${n}</button>`).join('')}${final
-    ? '<button type="button" class="cur" aria-current="step" aria-label="Final scoring">FS</button>'
-    : P.reachedFS ? '<button type="button" data-act="goRound" data-arg="6" aria-label="Go to final scoring">FS</button>'
-    : '<button type="button" disabled aria-label="Final scoring">FS</button>'}</div>`; };
+    ? '<button type="button" class="cur" aria-current="step" aria-label="End of game scoring">END</button>'
+    : P.reachedFS ? '<button type="button" data-act="goRound" data-arg="6" aria-label="Go to end of game scoring">END</button>'
+    : '<button type="button" disabled aria-label="End of game scoring">END</button>'}</div>`; };
 const track = (P, final = false) => G.solo !== null ? soloTrack(P, final) : `<div class="trk">${[1,2,3,4,5].map(n => (n === P.round && !final)
   ? `<button type="button" class="cur" aria-current="step">BR${n}</button>`
   : (n < P.round || final) ? `<button type="button" data-act="editRound" data-arg="${n}" aria-label="Fix battle round ${n}">BR${n}</button>`
   : `<button type="button" disabled>BR${n}</button>`).join('')}${final
-  ? '<button type="button" class="cur" aria-current="step" aria-label="Final scoring">FS</button>'
-  : '<button type="button" disabled aria-label="Final scoring">FS</button>'}</div>`;
+  ? '<button type="button" class="cur" aria-current="step" aria-label="End of game scoring">END</button>'
+  : '<button type="button" disabled aria-label="End of game scoring">END</button>'}</div>`;
 
 // VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
 const scorer = (title, value, sub, key, r = '') => { const pd = pendFor(VIEWP, key, r), left = pendLeft(VIEWP);
@@ -843,7 +846,7 @@ function playerView(i){
            ${track(P, true)}
            ${G.solo !== null ? soloBoard(P) : `<div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp} · Pri ${priTot(P)} · Sec ${secTot(P)}</span></div>
              <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>${bstrip(P)}</div>`}
-           <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
+           <div class="post-intro"><h3>End of game scoring</h3><p>Add points scored at the end of the battle. Leave at -- if none.</p></div>
            <div class="deck">
              ${flash}
              ${scorer('Primary', P.postP, '', 'postP')}
