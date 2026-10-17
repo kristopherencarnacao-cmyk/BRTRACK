@@ -209,7 +209,9 @@ function status(p){
   return p.roundDone ? `Finished BR${p.round}` : `Scoring BR${p.round}`;
 }
 const opts = (list, val, empty) => `<option value="">${empty}</option>` + list.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('');
-const bar = (eyebrow, title, right = '') => `<div class="top"><div>${eyebrow ? `<div class="lbl">${eyebrow}</div>` : ''}<h2>${title}</h2></div>${right}</div>`;
+const BACK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+// header: optional back button (an action name), optional eyebrow, title, right-side icons
+const bar = (eyebrow, title, right = '', back = '') => `<div class="top"${back ? ' style="padding-left:6px"' : ''}><div style="display:flex;align-items:center;gap:4px;min-width:0">${back ? `<button type="button" class="icon" data-act="${back}" aria-label="Back">${BACK}</button>` : ''}<div style="min-width:0">${eyebrow ? `<div class="lbl">${eyebrow}</div>` : ''}<h2>${title}</h2></div></div>${right}</div>`;
 const foot = (...btns) => `<div class="foot">${btns.join('')}</div>`;
 const b = (label, act, cls = 'btn', extra = '') => `<button type="button" class="${cls}" data-act="${act}" ${extra}>${label}</button>`;
 const sheet = (inner, close = 'closeSheet') => `<div class="overlay" ${close ? `data-act="${close}"` : ''}><div class="sheet" data-stop role="dialog" aria-modal="true"><div class="grab"></div>${inner}</div></div>`;
@@ -287,17 +289,17 @@ function playerView(i){
       break; }
     case 'confirm': {
       const oppSeen = O.confirmed || O.screen === 'confirm';
-      h = bar('Step 2 of 3','Check both lists', icons())
+      h = bar('Step 2 of 3','Check both lists', icons(), 'edit')
         + `<div class="scroll">
            <div class="card"><div class="row" style="display:flex;justify-content:space-between"><span class="lbl">You</span><button type="button" class="link" style="padding:0;min-height:32px" data-act="edit">Edit</button></div>
              <div style="font:700 19px var(--sans)">${nm(i)}</div><p>${listInfo(P)}</p></div>
            <div class="card"><div class="lbl">Opponent · ${O.confirmed ? 'confirmed' : oppSeen ? 'reviewing' : 'still setting up'}</div>
            ${oppSeen ? `<div style="font:700 19px var(--sans);margin-top:4px">${nm(o)}</div><p>${listInfo(O)}</p>` : `<p style="margin-top:6px">Their list appears here once they finish setup.</p>`}</div></div>`
-        + foot(P.confirmed ? `<div class="banner"><span>Waiting for Player ${o + 1} to confirm…</span></div>` : '', b(P.confirmed ? 'Confirmed' : 'Lists look right','confirm','btn', P.confirmed ? 'disabled' : ''));
+        + foot(b('Lists look right','confirm'));
       break; }
     case 'battle': {
       const set = G.attacker !== null && G.first !== null;
-      h = bar('Step 3 of 3','Roles and first turn', icons())
+      h = bar('Step 3 of 3','Roles and first turn', icons(), 'backToLists')
         + `<div class="scroll">
            <div class="fld"><span class="lbl">Attacker and defender</span><p style="font-size:13px">Each player rolls a D6. The highest roller decides who attacks. Pick your role:</p><div class="seg" role="group" aria-label="Your role"><button type="button" data-act="side" data-arg="att" aria-pressed="${G.attacker === i}">Attacker</button><button type="button" data-act="side" data-arg="def" aria-pressed="${G.attacker === o}">Defender</button></div></div>
            <div class="fld"><span class="lbl">First turn</span><p style="font-size:13px">Each player rolls a D6. The highest roller must go first. Who won?</p><div class="seg" role="group" aria-label="First turn roll-off winner"><button type="button" data-act="first" data-arg="me" aria-pressed="${G.first === i}">I won</button><button type="button" data-act="first" data-arg="opp" aria-pressed="${G.first === o}">Opponent won</button></div></div>
@@ -307,7 +309,7 @@ function playerView(i){
              <div style="display:flex;justify-content:space-between"><span class="meta">Attacker</span><strong>${nm(G.attacker)}</strong></div>
              <div style="display:flex;justify-content:space-between"><span class="meta">Defender</span><strong>${nm(1 - G.attacker)}</strong></div>
              <div style="display:flex;justify-content:space-between"><span class="meta">First turn</span><strong>${nm(G.first)}</strong></div></div>` : ''}</div>`
-        + foot(`<div class="meta">Player ${o + 1}: ${O.ready ? 'ready' : 'not ready yet'}</div>`, b(P.ready ? 'Waiting for opponent…' : 'Ready — start battle round 1','ready','btn', (!set || P.ready) ? 'disabled' : ''));
+        + foot(`<div class="meta">${nm(o)}: ${O.ready ? 'ready' : O.screen === 'battle' ? 'choosing roles' : 'still checking lists'}</div>`, b(P.ready ? 'Waiting for opponent…' : 'Ready — start battle round 1','ready','btn', (!set || P.ready) ? 'disabled' : ''));
       break; }
     case 'round': {
       const r = P.round - 1, waiting = P.roundDone, nextLbl = P.round < 5 ? `BR${P.round + 1}` : 'end-of-game scoring';
@@ -483,8 +485,9 @@ function act(a, arg){
       G.connected = true; both('connected'); break;
     case 'addDet': P.detCount = Math.min(3, P.detCount + 1); break;
     case 'toConfirm': P.screen = 'confirm'; break;
-    case 'confirm': P.confirmed = true; if (O.confirmed) both('battle'); break;
-    case 'edit': P.confirmed = false; P.screen = 'setup'; break;
+    case 'confirm': P.confirmed = true; P.screen = 'battle'; break;   // each player moves on without waiting
+    case 'edit': P.confirmed = false; P.ready = false; P.screen = 'setup'; break;
+    case 'backToLists': P.ready = false; P.screen = 'confirm'; break;
     case 'side': G.attacker = arg === 'att' ? i : o; G.players.forEach(p => p.ready = false); break;
     case 'first': G.first = arg === 'me' ? i : o; G.players.forEach(p => p.ready = false); break;
     case 'ready': P.ready = true; if (O.ready) both('round'); break;
