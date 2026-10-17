@@ -53,7 +53,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 - Destructive actions sit behind a divider and a confirmation sheet.
 - Works from 320px wide; big scores scale to fit their card.
 - Messages like "Battle round 2 has started" float over the header as a toast instead of pushing content down.
-- Follows the PhosphorDice visual spec (`DESIGN.md` in the PhosphorDice project): one phosphor accent per theme; gold and red are reserved for crit/fail meaning, so CP and the Ready state use the accent. Labels carry `// ` prefixes, hints `> `, and unscored values show `--`. Motion is stepped and brief, and off under reduced motion.
+- Follows the PhosphorDice visual spec (`DESIGN.md` in the PhosphorDice project): one phosphor accent per theme; gold and red are reserved for crit/fail meaning, with one deliberate exception: the CP tracker stays gold in every theme. The Ready state uses the accent. Labels carry `// ` prefixes, hints `> `, and unscored values show `--`. Motion is stepped and brief, and off under reduced motion.
 - Keeps the screen awake during rounds where the browser allows it.
 
 ## Not yet built

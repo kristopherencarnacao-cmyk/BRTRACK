@@ -462,15 +462,17 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 @media (max-height:720px){.deck>.btn,.deck>.btn2{margin-top:6px}}
 @media (max-height:600px){.deck>.btn,.deck>.btn2{margin-top:4px}}
 
-/* CP tracker: 50% taller; the number is the hero, a small "CP" sits inline beside it. Accent-coloured (gold is reserved for crits) */
-.cpbar{height:90px}
-.cpbar button{font-size:24px}
-.cpbar button:hover{box-shadow:0 0 12px var(--glow-soft)}
-.cpbar button:active,.cpbar button.add:active{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--on-ink)!important;text-shadow:none!important}
-.cpmid{width:128px;flex-direction:row;align-items:baseline;justify-content:center;gap:5px;padding-top:4px;border-color:var(--accent);
-  box-shadow:inset 0 0 16px rgba(var(--rgb),.10),0 0 12px rgba(var(--rgb),.12);align-content:center;flex-wrap:wrap}
-.cpmid .v{margin:0;font:700 64px/1 var(--mono);color:var(--accent);text-shadow:0 0 12px var(--glow),0 0 2px rgba(var(--rgb),.8)}
-.cpmid .cp-u{font:700 12px/1 var(--mono);letter-spacing:.12em;color:var(--accent);opacity:.75}
+/* CP tracker: 50% taller and in PhosphorDice's gold (a deliberate exception to the crit-only gold rule; stays gold in every theme); the number is the hero, a small "CP" sits inline beside it */
+.cpbar{height:90px;--cp-line:rgba(245,196,81,.35)}
+.cpbar button{border-color:var(--cp-line);color:var(--gold);font-size:24px}
+.cpbar button:hover{background:rgba(245,196,81,.08);border-color:var(--gold);box-shadow:0 0 12px var(--gold-glow)}
+.cpbar button.add{background:color-mix(in srgb,var(--gold) 12%,var(--bg));border-color:var(--cp-line);color:var(--gold);text-shadow:0 0 8px var(--gold-glow)}
+.cpbar button.add:hover{background:color-mix(in srgb,var(--gold) 20%,var(--bg));border-color:var(--gold)}
+.cpbar button:active,.cpbar button.add:active{background:var(--gold)!important;border-color:var(--gold)!important;color:var(--on-gold)!important;text-shadow:none!important}
+.cpmid{--fr:var(--gold);width:128px;flex-direction:row;align-items:baseline;justify-content:center;gap:5px;padding-top:4px;border-color:var(--gold);
+  box-shadow:inset 0 0 16px rgba(245,196,81,.10),0 0 12px rgba(245,196,81,.12);align-content:center;flex-wrap:wrap}
+.cpmid .v{margin:0;font:700 64px/1 var(--mono);color:var(--gold);text-shadow:0 0 12px var(--gold-glow),0 0 2px rgba(245,196,81,.8)}
+.cpmid .cp-u{font:700 12px/1 var(--mono);letter-spacing:.12em;color:var(--gold);opacity:.75}
 @media (max-width:380px){.cpmid{width:112px}.cpmid .v{font-size:56px}}
 
 /* modals: centred bracketed panel over a blurred scrim, opening with PhosphorDice's guide flicker */
