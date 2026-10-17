@@ -104,8 +104,10 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
-.pend{margin-left:auto;margin-right:10px;min-height:34px;min-width:44px;padding:0 10px;border:1.5px solid var(--accent);border-radius:999px;background:var(--accent-soft);color:var(--accent);font:700 16px var(--mono);font-variant-numeric:tabular-nums;cursor:pointer}
-.pend.neg{border-color:var(--danger);color:var(--danger);background:transparent}
+.seg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.seg4 button{min-height:44px;font-size:13px}
+.pend{margin:-10px 6px -10px auto;padding:10px 6px;min-width:44px;border:0;background:transparent;color:var(--accent);font:700 18px/1 var(--mono);font-variant-numeric:tabular-nums;cursor:pointer}
+.pend.neg{color:var(--danger)}
 .pbar{height:3px;margin:-4px 2px -2px;border-radius:2px;overflow:hidden}
 .pbar.on{background:var(--soft)}
 .pbar i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:pdrain 3s linear both}
@@ -213,6 +215,11 @@ const DETS = ['[Detachment A]','[Detachment B]','[Detachment C]'];
 const DISPS = ['[Disposition A]','[Disposition B]','[Disposition C]'];
 const TIMER_MS = 5 * 60 * 1000, TOAST_MS = 4000;
 let BATCH_MS = 3000;   // score taps gather into one batch that commits this long after the last tap (CP is instant)
+const BATCH_KEY = 'scorehammer:batchMs', BATCH_OPTS = [[0,'Instant'],[3000,'3s'],[5000,'5s'],[10000,'10s']];
+try { const v = +localStorage.getItem(BATCH_KEY); if (BATCH_OPTS.some(([ms]) => ms === v) && localStorage.getItem(BATCH_KEY) !== null) BATCH_MS = v; } catch (e) {}
+const batchSeg = () => `<div class="fld" style="padding:6px 4px 2px"><span class="lbl">Score delay</span>
+  <p style="font-size:12px;margin:0 0 4px">How long Primary and Secondary taps wait before they’re added to your score.</p>
+  <div class="seg seg4" role="group" aria-label="Score delay">${BATCH_OPTS.map(([ms, l]) => `<button type="button" data-act="setBatch" data-arg="${ms}" aria-pressed="${BATCH_MS === ms}">${l}</button>`).join('')}</div></div>`;
 const LABEL = { prim:'Primary', sec:'Secondary', cp:'Command points', postP:'End-game primary', postS:'End-game secondary' };
 const QR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM21 14v3M14 21h7"/></svg>';
 const MENU = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
@@ -315,7 +322,7 @@ const track = (P, final = false) => G.solo !== null ? soloTrack(P, final) : `<di
 const scorer = (title, value, sub, key, r = '') => { const pd = pendFor(VIEWP, key, r), left = pendLeft(VIEWP);
   return `<div class="scr">
   <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div>${pd ? `<button type="button" class="pend${pd < 0 ? ' neg' : ''}" data-act="commitNow" aria-label="Add ${signed(pd)} ${title} now">${signed(pd)}</button>` : ''}<div class="v">${value}</div></div>
-  <div class="pbar${pd ? ' on' : ''}" aria-hidden="true">${pd ? `<i style="animation-delay:-${BATCH_MS - left}ms"></i>` : ''}</div>
+  <div class="pbar${pd ? ' on' : ''}" aria-hidden="true">${pd ? `<i style="animation-duration:${BATCH_MS}ms;animation-delay:-${BATCH_MS - left}ms"></i>` : ''}</div>
   <div class="scr-b">${[-1,1,2,3,4,5].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`; };
 
 // CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
@@ -490,12 +497,14 @@ function playerView(i){
   switch (P.sheet){
     case 'menu': h += G.solo !== null ? sheet(`<div class="lbl">Menu</div>
         <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
+        ${batchSeg()}
         <div class="sep"></div>
         ${b('Start over…','sheet','btn2','data-arg="soloRestart"')}
         ${b('Exit to start…','sheet','btn2 danger','data-arg="soloExit"')}
         <div class="sep"></div>${b('Close','closeSheet')}`) : sheet(`<div class="lbl">Menu</div>
         ${b('Invite spectators','sheet','btn2','data-arg="share"')}
         <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
+        ${batchSeg()}
         <div class="sep"></div>
         ${b('Restart match…','restart','btn2')}
         ${P.screen === 'round' ? b('Concede…','sheet','btn2 danger','data-arg="concede"') : ''}
@@ -634,6 +643,8 @@ function act(a, arg){
     case 'unready': P.ready = false; break;
     case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
     case 'commitNow': break;   // committed above
+    case 'setBatch':   // pending points are added now, then the new delay applies to the next taps
+      commitAll(); BATCH_MS = +arg; try { localStorage.setItem(BATCH_KEY, String(BATCH_MS)); } catch (e) {} break;
     case 'bump': {
       const [k, ds, rs] = arg.split(':'); const d = +ds; const r = rs ? +rs : P.round;
       if (k !== 'cp') {   // Primary / Secondary: gather into the pending batch
