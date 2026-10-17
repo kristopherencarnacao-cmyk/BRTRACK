@@ -20,7 +20,11 @@ img{max-width:100%}
   --bg:#05070a; --surface:#0e1217; --fill:#151a21; --ink:#dfe4ea; --muted:#8792a0;
   --line:#1f5a45; --soft:#232b35; --accent:#55e6a5; --accent-soft:#0b231b; --on-ink:#02140d;
   --scrim:rgba(1,6,4,.82); --danger:#e04652; --gold:#f5c451; --seal-hi:#8af5c4; --phos-deep:#2a9d6c;
-  --rgb:85,230,165; --glow:rgba(85,230,165,.45); --glow-soft:rgba(85,230,165,.18);
+  --rgb:85,230,165; --glow:rgba(var(--rgb),.45); --glow-soft:rgba(var(--rgb),.18);
+  /* every tint is mixed from the accent, so a PhosphorDice-style theme swap (cyan, violet…) recolours the whole app */
+  --accent-dim:color-mix(in srgb,var(--accent) 74%,var(--bg)); --accent-mid:color-mix(in srgb,var(--accent) 88%,var(--bg));
+  --tint-1:color-mix(in srgb,var(--accent) 10%,var(--bg)); --tint-2:color-mix(in srgb,var(--accent) 16%,var(--bg)); --tint-3:color-mix(in srgb,var(--accent) 25%,var(--bg));
+  --on-gold:#1a1200; --gold-glow:rgba(245,196,81,.45); --red-glow:rgba(224,70,82,.3); --ink-glow:rgba(223,228,234,.18); --deep-shadow:rgba(0,0,0,.6);
   --term:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace;
   --sans:var(--term); --mono:var(--term);
 }
@@ -230,14 +234,14 @@ h2{font-weight:700;letter-spacing:.03em}
 .btn2{background:transparent;border-color:var(--line);color:var(--accent)}
 .btn2:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 12px var(--glow-soft)}
 .btn2.danger,.danger{color:var(--danger);border-color:rgba(224,70,82,.55)}
-.btn2.danger:hover{background:rgba(224,70,82,.08);border-color:var(--danger);box-shadow:0 0 12px rgba(224,70,82,.3)}
+.btn2.danger:hover{background:rgba(224,70,82,.08);border-color:var(--danger);box-shadow:0 0 12px var(--red-glow)}
 .link{color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-size:12.5px}
 .icon{color:var(--accent)}
 .icon:disabled{color:var(--soft)}
 .icon:not(:disabled):hover,.icon:not(:disabled):active{background:var(--accent-soft)}
 
 /* end-round ready state: gold "locked in" */
-.readybtn{background:var(--gold)!important;border-color:var(--gold)!important;color:#1a1200!important;box-shadow:0 0 14px rgba(245,196,81,.45)!important}
+.readybtn{background:var(--gold)!important;border-color:var(--gold)!important;color:var(--on-gold)!important;box-shadow:0 0 14px var(--gold-glow)!important}
 .readybtn::before,.readybtn::after{content:none}
 
 /* round track */
@@ -254,8 +258,8 @@ button.side:hover{background:var(--accent-soft)}
 .scr-b button,.cpbar button{background:transparent;border-color:var(--line);color:var(--accent)}
 .scr-b button:hover,.cpbar button:hover{background:var(--accent-soft);border-color:var(--accent)}
 /* plus buttons: phosphor at ~20% brightness, so text flips to lit phosphor */
-.scr-b button.add,.cpbar button.add{background:#112e21;border-color:var(--line);color:var(--accent);text-shadow:0 0 8px var(--glow);box-shadow:none}
-.scr-b button.add:hover,.cpbar button.add:hover{background:#174230;border-color:var(--accent)}
+.scr-b button.add,.cpbar button.add{background:var(--tint-2);border-color:var(--line);color:var(--accent);text-shadow:0 0 8px var(--glow);box-shadow:none}
+.scr-b button.add:hover,.cpbar button.add:hover{background:var(--tint-3);border-color:var(--accent)}
 .scr-b button:active,.cpbar button:active{filter:brightness(1.3)}
 .scr-h .v,.cpmid .v{color:var(--accent);text-shadow:0 0 10px var(--glow)}
 .cpmid{background:var(--surface);border-color:var(--accent);box-shadow:inset 0 0 14px rgba(var(--rgb),.08)}
@@ -306,18 +310,47 @@ td,th{border-bottom-color:var(--soft)}
 /* readout stats as in PhosphorDice: plain label over a lit number */
 .stat .lbl{font-size:10px;letter-spacing:.14em}
 .stat .lbl::before{content:none}
-.stat .big{color:var(--ink);text-shadow:0 0 10px rgba(223,228,234,.18)}
+.stat .big{color:var(--ink);text-shadow:0 0 10px var(--ink-glow)}
 /* scoring rows sit back so the scoreboard VP stays the brightest thing on screen */
 .scr{--fr:var(--line);border-color:var(--soft);background-color:var(--surface);box-shadow:none;
   background-image:linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr)),linear-gradient(var(--fr),var(--fr))}
 .scr-h .v{color:var(--ink);text-shadow:none;opacity:.9}
 .scr-h div[style*="font:600 15px"]{color:var(--muted)}
-.scr-b button{border-color:var(--soft);color:#3fae7f}
-.scr-b button.add{background:#0c1f17;border-color:var(--soft);color:#4cc994;text-shadow:none}
-.scr-b button:hover,.scr-b button.add:hover{border-color:var(--line);background:#112e21}
+.scr-b button{border-color:var(--soft);color:var(--accent-dim)}
+.scr-b button.add{background:var(--tint-1);border-color:var(--soft);color:var(--accent-mid);text-shadow:none}
+.scr-b button:hover,.scr-b button.add:hover{border-color:var(--line);background:var(--tint-2)}
 /* monospace runs wider: let list details wrap and tighten headings on small phones */
 .card p,.vs p,.spec p{overflow-wrap:anywhere}
 @media (max-width:380px){.top h2{letter-spacing:0;font-size:14px!important}}
+
+/* ===================== Aligned with PhosphorDice ===================== */
+/* no device frame: like PhosphorDice the app runs edge to edge in one column. The square frame only shows in #dev, where it simulates a phone */
+.phone{border-radius:0}
+body:not(.dev){padding:0 env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px);overflow:hidden}
+body:not(.dev) .shell{max-width:520px}
+body:not(.dev) .shell.wide{max-width:960px}
+body:not(.dev) .phone{border:0;box-shadow:none;background:transparent;min-height:0;
+  height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+body:not(.dev) .top,body:not(.dev) .foot{background:transparent}
+body:not(.dev) .top{border-bottom:1px dashed var(--line)}
+body:not(.dev) .foot{border-top:1px dashed var(--line)}
+
+/* pressed: buttons fill with phosphor and the label goes dark, as in PhosphorDice */
+.btn2:active:not(:disabled),.trk button:active:not(:disabled):not(.cur),.scr-b button:active,.scr-b button.add:active,
+.cpbar button:active,.cpbar button.add:active,.stp button:active,.seg button:active,.icon:active:not(:disabled),button.side:active{
+  background:var(--accent)!important;border-color:var(--accent)!important;color:var(--on-ink)!important;text-shadow:none!important;filter:none!important}
+.btn:active:not(:disabled){background:var(--accent);border-color:var(--accent);filter:brightness(1.15)}
+.btn2.danger:active,.danger:active:not(:disabled){background:var(--danger)!important;border-color:var(--danger)!important;color:var(--bg)!important}
+
+/* readouts flicker in when they change (PhosphorDice's result tick) */
+.tick{animation:tick .4s steps(5) both}
+@keyframes tick{0%{opacity:.15}20%{opacity:1}40%{opacity:.45}60%{opacity:1}80%{opacity:.7}100%{opacity:1}}
+/* sheets rise with a signal flicker, the scrim fades in behind */
+.overlay.enter{animation:scrimIn .2s ease-out both}
+.overlay.enter .sheet{animation:sheetIn .3s ease-out both}
+@keyframes scrimIn{from{opacity:0}}
+@keyframes sheetIn{0%{opacity:0;transform:translateY(24px)}40%{opacity:.6}55%{opacity:.25}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.tick,.overlay.enter,.overlay.enter .sheet{animation:none}}
 </style>
 </head>
 <body>
@@ -682,7 +715,13 @@ function render(){
   const f = document.activeElement && app.contains(document.activeElement) ? document.activeElement : null;
   const focusSel = same && f && f.dataset.act ? `[data-act="${f.dataset.act}"]${f.dataset.arg ? `[data-arg="${f.dataset.arg}"]` : ''}` : (same && f && f.id ? '#' + f.id : null);
   const soloOther = G.solo !== null && dev !== G.solo;
+  // remember each readout's value so the ones that change can flicker in after the re-draw
+  const READOUTS = '.vp,.stat .big,.scr-h .v,.stp .mid .v,.cpmid .v';
+  const before = same ? [...app.querySelectorAll(READOUTS)].map(x => x.textContent) : null;
   app.innerHTML = soloOther ? soloElsewhere() : dev === 2 ? spectatorView() : playerView(dev);
+  if (before) app.querySelectorAll(READOUTS).forEach((x, n) => { if (n < before.length && before[n] !== x.textContent) x.classList.add('tick'); });
+  // a sheet animates in only when it first opens, not on every re-draw while it is open
+  if (!same) { const ov = app.querySelector('.overlay'); if (ov) ov.classList.add('enter'); }
   if (same) {
     const sc = app.querySelector('.scroll'); if (sc && scrollTop) sc.scrollTop = scrollTop;
     const sh = app.querySelector('.sheet'); if (sh && sheetTop) sh.scrollTop = sheetTop;
