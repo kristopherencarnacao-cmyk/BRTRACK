@@ -101,6 +101,12 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 .stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
+.cpbar{display:flex;align-items:stretch;gap:6px;height:60px}
+.lefty .cpbar{flex-direction:row-reverse}
+.cpbar button{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:600 20px var(--mono);cursor:pointer;padding:0}
+.cpbar button.add{background:var(--ink);color:var(--on-ink)}
+.cpmid{flex:none;width:72px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.cpmid .v{font:600 26px var(--mono);font-variant-numeric:tabular-nums;margin-top:2px}
 /* scoreboard stays pinned while the controls scroll on short phones */
 .scroll>.board{position:sticky;top:0;z-index:2;flex:none;box-shadow:0 -10px 0 var(--bg)}
 @media (max-height:760px){.vp{font-size:min(40px,40cqi)}.side{padding:8px 12px}.trk button{min-height:44px}.scr-b button{height:46px}.stp{height:60px}.scroll{gap:10px}}
@@ -228,6 +234,11 @@ const scorer = (title, value, sub, key, r = '') => `<div class="scr">
   <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div><div class="meta" style="font-size:12px">${sub}</div></div><div class="v">${value}</div></div>
   <div class="scr-b">${[-10,-5,-1,1,5,10].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`;
 
+// CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
+const cpBar = P => `<div class="cpbar">${[-2,-1].map(d => `<button type="button" data-act="bump" data-arg="cp:${d}:" aria-label="Remove ${-d} CP">−${-d}</button>`).join('')}
+  <div class="cpmid" role="status" aria-label="${P.cp} command points"><span class="lbl">CP</span><span class="v">${P.cp}</span></div>
+  ${[1,2].map(d => `<button type="button" class="add" data-act="bump" data-arg="cp:${d}:" aria-label="Add ${d} CP">+${d}</button>`).join('')}</div>`;
+
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
   let h = '';
@@ -316,7 +327,7 @@ function playerView(i){
                        : b(`End battle round ${P.round}`,'sheet', O.roundDone ? 'btn' : 'btn2','data-arg="endRound"')}
            </div></div>`
         // CP lives in the pinned footer: the most-tapped control, always in thumb reach
-        + foot(stepper('CP', P.cp, '', 'cp'));
+        + foot(cpBar(P));
       break; }
     case 'post':
       h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<div style="min-width:0;flex:1"><div class="lbl">After battle round 5</div><h2 style="font-size:18px;white-space:nowrap">Final scoring</h2></div></div>${icons()}</div>`
