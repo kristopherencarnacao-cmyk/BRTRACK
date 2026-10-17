@@ -20,7 +20,7 @@ img{max-width:100%}
   --bg:#05070a; --surface:#0e1217; --fill:#151a21; --ink:#dfe4ea; --muted:#8792a0;
   --line:#1f5a45; --soft:#232b35; --accent:#55e6a5; --accent-soft:#0b231b; --on-ink:#02140d;
   --scrim:rgba(1,6,4,.82); --danger:#e04652; --gold:#f5c451; --seal-hi:#8af5c4; --phos-deep:#2a9d6c;
-  --rgb:85,230,165; --glow:rgba(var(--rgb),.45); --glow-soft:rgba(var(--rgb),.18);
+  --rgb:85,230,165; --rgb-hi:200,255,230; --glow:rgba(var(--rgb),.45); --glow-soft:rgba(var(--rgb),.18);
   /* every tint is mixed from the accent, so a PhosphorDice-style theme swap (cyan, violet…) recolours the whole app */
   --accent-dim:color-mix(in srgb,var(--accent) 74%,var(--bg)); --accent-mid:color-mix(in srgb,var(--accent) 88%,var(--bg));
   --tint-1:color-mix(in srgb,var(--accent) 10%,var(--bg)); --tint-2:color-mix(in srgb,var(--accent) 16%,var(--bg)); --tint-3:color-mix(in srgb,var(--accent) 25%,var(--bg));
@@ -346,11 +346,40 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 .tick{animation:tick .4s steps(5) both}
 @keyframes tick{0%{opacity:.15}20%{opacity:1}40%{opacity:.45}60%{opacity:1}80%{opacity:.7}100%{opacity:1}}
 /* sheets rise with a signal flicker, the scrim fades in behind */
-.overlay.enter{animation:scrimIn .2s ease-out both}
-.overlay.enter .sheet{animation:sheetIn .3s ease-out both}
-@keyframes scrimIn{from{opacity:0}}
-@keyframes sheetIn{0%{opacity:0;transform:translateY(24px)}40%{opacity:.6}55%{opacity:.25}100%{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.tick,.overlay.enter,.overlay.enter .sheet{animation:none}}
+/* modals: centred bracketed panel over a blurred scrim, opening with PhosphorDice's guide flicker */
+.overlay{justify-content:center;align-items:center;padding:24px 16px;background:rgba(1,6,4,.8);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.sheet{width:min(100%,420px);max-height:100%;border:1px solid var(--line);--bk:16px;padding:18px 18px 16px;
+  box-shadow:inset 0 0 22px rgba(var(--rgb),.05),0 0 0 1px rgba(0,0,0,.6),0 12px 30px var(--deep-shadow)}
+.sheet .grab{display:none}
+.overlay.enter .sheet{animation:guideIn .3s ease-out both}
+@keyframes guideIn{0%{opacity:0;transform:translateY(4%)}40%{opacity:.6}55%{opacity:.25}100%{opacity:1;transform:none}}
+
+/* occasional CRT hiccup, about once a minute at random: heavy scanlines, a bright band rolling down and a brief jitter */
+.crt-band{position:fixed;left:0;right:0;top:-25%;height:22%;pointer-events:none;z-index:9997;opacity:0;
+  background:linear-gradient(180deg,transparent,rgba(var(--rgb),.10) 45%,rgba(var(--rgb-hi),.16) 50%,rgba(var(--rgb),.10) 55%,transparent)}
+body.flicker .crt-band{animation:bandRoll .7s linear both}
+@keyframes bandRoll{0%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(560%)}}
+body.flicker::after{background:repeating-linear-gradient(180deg,rgba(0,0,0,.5) 0 2px,transparent 2px 4px),radial-gradient(ellipse 120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%);animation:scanJump .7s steps(1) both}
+@keyframes scanJump{0%{background-position:0 0,0 0}25%{background-position:0 2px,0 0}50%{background-position:0 1px,0 0}75%{background-position:0 3px,0 0}}
+body.flicker .shell{animation:crtFlicker .7s steps(1) both}
+@keyframes crtFlicker{0%{filter:brightness(1.5);transform:translateX(-2px)}12%{filter:brightness(.55);transform:translateX(2px)}24%{filter:brightness(1.3);transform:none}38%{filter:brightness(.75);transform:translate(1px,-1px)}52%{filter:brightness(1.15);transform:none}66%{filter:brightness(.85);transform:translateX(-1px)}80%{filter:brightness(1.05);transform:none}100%{filter:none;transform:none}}
+/* round-change flicker runs at double speed */
+body.flicker.fast .crt-band,body.flicker.fast::after,body.flicker.fast .shell{animation-duration:.35s}
+
+/* sparking cable in front of the screen: its flash and sparks show up as a reflection on the glass */
+.crt-glass{position:fixed;inset:0;pointer-events:none;z-index:10000;overflow:hidden}
+.arc{position:absolute;width:0;height:0;pointer-events:none;z-index:4;opacity:.34}
+.arc-glow{position:absolute;left:-230px;top:-230px;width:460px;height:460px;border-radius:50%;opacity:0;filter:blur(14px);
+  background:radial-gradient(circle,rgba(225,240,255,.7) 0,rgba(170,210,255,.42) 12%,rgba(120,180,255,.2) 30%,rgba(90,160,255,.06) 50%,transparent 68%)}
+.arc-core{position:absolute;left:-22px;top:-5px;width:44px;height:10px;filter:blur(8px);border-radius:50%;opacity:0;background:rgba(240,248,255,.85);box-shadow:0 0 16px 8px rgba(190,225,255,.55),0 0 44px 20px rgba(120,190,255,.25);transform:rotate(var(--rot,0deg))}
+.arc-wash{position:fixed;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse 70% 60% at var(--ax) var(--ay),rgba(170,215,255,.12),transparent 70%)}
+.arc-spark{position:absolute;left:-2px;top:-2px;width:4px;height:4px;border-radius:50%;background:rgba(255,240,210,.7);opacity:0;filter:blur(3px);
+  box-shadow:0 0 6px 2px rgba(255,205,130,.45);animation:sparkFly var(--dur) cubic-bezier(.15,.55,.35,1) var(--delay) both}
+@keyframes sparkFly{
+  0%{opacity:1;transform:translate(0,0) scale(1.2)}
+  45%{opacity:.95;transform:translate(calc(var(--dx) * .55),var(--up)) scale(1)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.35)}}
+@media (prefers-reduced-motion:reduce){.tick,.overlay.enter .sheet,body.flicker .crt-band,body.flicker::after,body.flicker .shell{animation:none}.crt-glass{display:none}}
 </style>
 </head>
 <body>
@@ -368,6 +397,8 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   </div>
   <div class="phone" id="app"></div>
 </div>
+<div class="crt-band" aria-hidden="true"></div>
+<div class="crt-glass" aria-hidden="true"></div>
 
 <script>
 const ROOM = 'K7Q-29';
@@ -896,6 +927,66 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 restore();
 render();
+
+// ===== ambient CRT effects, ported from PhosphorDice =====
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// random CRT flicker roughly once a minute (45–75 s apart), skipped when the tab is hidden or motion is reduced
+let flickT = null;
+function flicker(fast){
+  if (REDUCE || document.hidden) return;
+  const b = document.body; clearTimeout(flickT); b.classList.remove('flicker','fast'); void b.offsetWidth;
+  b.classList.toggle('fast', !!fast); b.classList.add('flicker');
+  flickT = setTimeout(() => b.classList.remove('flicker','fast'), fast ? 400 : 750);
+}
+(function schedule(){ setTimeout(() => { flicker(); schedule(); }, 45000 + Math.random()*30000); })();
+// a quick flicker when the battle round changes, like PhosphorDice's action buttons
+let lastRoundKey = null;
+new MutationObserver(() => {
+  const P = G.players[dev], k = P ? dev + ':' + P.round : null;
+  if (lastRoundKey !== null && k !== null && k.split(':')[0] === lastRoundKey.split(':')[0] && k !== lastRoundKey) flicker(true);
+  lastRoundKey = k;
+}).observe(app, { childList:true });
+
+// sparking cable reflected on the glass: once in the first 15 s, then every 1–2 minutes
+function cableSpark(){
+  if (REDUCE || document.hidden) return;
+  const glass = document.querySelector('.crt-glass'); if (!glass) return;
+  const fx = document.createElement('div'); fx.className = 'arc';
+  // the cable hangs in front of the top-right of the screen
+  const x = 72 + Math.random()*20, y = 6 + Math.random()*16;
+  fx.style.left = x + '%'; fx.style.top = y + '%'; fx.style.setProperty('--rot', (Math.random()*60 - 30).toFixed(0) + 'deg');
+  fx.innerHTML = '<div class="arc-wash"></div><div class="arc-glow"></div><div class="arc-core"></div>';
+  const wash = fx.querySelector('.arc-wash'); wash.style.setProperty('--ax', x + '%'); wash.style.setProperty('--ay', y + '%');
+  glass.appendChild(fx);
+  const glow = fx.querySelector('.arc-glow'), core = fx.querySelector('.arc-core');
+  // an irregular electrical flicker: bright pops separated by short dark gaps
+  const steps = [], n = 11 + Math.floor(Math.random()*6);
+  for (let i = 0; i < n; i++){ const on = i % 2 === 0 || Math.random() < .25; steps.push([on ? (.5 + Math.random()*.5) : Math.random()*.12, 40 + Math.random()*90]); }
+  steps.push([0,0]);
+  let t = 0, bursts = 0;
+  steps.forEach(([o,d]) => {
+    setTimeout(() => {
+      glow.style.opacity = o; core.style.opacity = Math.min(1, o*1.3); wash.style.opacity = o;
+      if (o > .85 && bursts < 1){ bursts++; spray(fx, 1 + Math.floor(Math.random()*2)); }
+    }, t);
+    t += d;
+  });
+  setTimeout(() => fx.remove(), t + 1400);
+}
+function spray(fx, k){
+  for (let i = 0; i < k; i++){
+    const s = document.createElement('i'); s.className = 'arc-spark';
+    s.style.setProperty('--dx', ((Math.random()*2 - 1)*(60 + Math.random()*120)).toFixed(0) + 'px');
+    s.style.setProperty('--up', (-(20 + Math.random()*60)).toFixed(0) + 'px');   // pops up first…
+    s.style.setProperty('--dy', (60 + Math.random()*140).toFixed(0) + 'px');     // …then falls
+    s.style.setProperty('--dur', (600 + Math.random()*700).toFixed(0) + 'ms');
+    s.style.setProperty('--delay', (Math.random()*60).toFixed(0) + 'ms');
+    fx.appendChild(s);
+  }
+}
+// tapping the title sets it off on demand, as in PhosphorDice
+app.addEventListener('click', e => { if (e.target.closest('h1')) cableSpark(); });
+setTimeout(() => { cableSpark(); (function again(){ setTimeout(() => { cableSpark(); again(); }, 60000 + Math.random()*60000); })(); }, 3000 + Math.random()*9000);
 </script>
 </body>
 </html>
