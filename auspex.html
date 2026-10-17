@@ -351,8 +351,8 @@ const remaining = () => G.endedAt ? Math.max(0, TIMER_MS - (Date.now() - G.ended
 const clock = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 const signed = n => (n > 0 ? '+' : '') + n;
 function status(p){
-  if (['start','host','join','connected','setup'].includes(p.screen)) return 'Setting up army';
-  if (p.screen === 'battle') return p.ready ? 'Ready' : 'Choosing roles';
+  if (p.screen === 'setup' && p.ready) return 'Ready';
+  if (['onboard','start','host','join','connected','setup'].includes(p.screen)) return 'Setting up army';
   if (p.screen === 'post') return 'End-game scoring';
   if (p.screen === 'results') return 'Finished';
   return p.roundDone ? `Finished BR${p.round}` : `Scoring BR${p.round}`;
@@ -464,7 +464,7 @@ function playerView(i){
       break;
     case 'setup': {
       const ok = !!P.name.trim();
-      h = bar('Step 1 of 2','Your army', icons())
+      h = bar('','Your army', icons())
         + `<div class="scroll">
            <div class="fld"><label for="name${i}">Player name</label><input id="name${i}" data-field="name" value="${esc(P.name)}" placeholder="Your name" autocomplete="off"></div>
            <div class="fld"><label for="army${i}">Army <span class="opt-tag">optional</span></label><input id="army${i}" data-field="army" value="${esc(P.army)}" placeholder="e.g. Space Marines" autocomplete="off"></div>
@@ -473,21 +473,10 @@ function playerView(i){
            ${P.detCount > 2 ? `<div class="fld"><label for="d3${i}">Third detachment <span class="opt-tag">optional</span></label><input id="d3${i}" data-field="det3" value="${esc(P.det3)}" placeholder="Detachment name" autocomplete="off"></div>` : ''}
            ${P.detCount < 3 ? `<button type="button" class="link" data-act="addDet">+ Add another detachment</button>` : ''}
            <div class="fld"><label for="disp${i}">Disposition <span class="opt-tag">optional</span></label><input id="disp${i}" data-field="disp" value="${esc(P.disp)}" placeholder="Disposition name" autocomplete="off"></div></div>`
-        + foot(b('Continue','confirm','btn',`id="setupNext" ${ok ? '' : 'disabled'}`));
-      break; }
-    case 'battle': {
-      const set = G.attacker !== null && G.first !== null;
-      h = bar('Step 2 of 2','Roles and first turn', icons(), 'edit')
-        + `<div class="scroll">
-           <div class="fld"><span class="lbl">Attacker and defender</span><p style="font-size:13px">Each player rolls a D6. The highest roller decides who attacks. Pick your role:</p><div class="seg" role="group" aria-label="Your role"><button type="button" data-act="side" data-arg="att" aria-pressed="${G.attacker === i}">Attacker</button><button type="button" data-act="side" data-arg="def" aria-pressed="${G.attacker === o}">Defender</button></div></div>
-           <div class="fld"><span class="lbl">First turn</span><p style="font-size:13px">Each player rolls a D6. The highest roller must go first. Who won?</p><div class="seg" role="group" aria-label="First turn roll-off winner"><button type="button" data-act="first" data-arg="me" aria-pressed="${G.first === i}">I won</button><button type="button" data-act="first" data-arg="opp" aria-pressed="${G.first === o}">Opponent won</button></div></div>
-           <p style="font-size:12px">Either player can set these. Changes show on both devices.</p>
-           <details><summary>Deployment reminders</summary><p>[Mission-pack tips: deployment zones, alternating deployment, reserves, scout moves]</p></details>
-           ${set ? `<div class="card" style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
-             <div style="display:flex;justify-content:space-between"><span class="meta">Attacker</span><strong>${nm(G.attacker)}</strong></div>
-             <div style="display:flex;justify-content:space-between"><span class="meta">Defender</span><strong>${nm(1 - G.attacker)}</strong></div>
-             <div style="display:flex;justify-content:space-between"><span class="meta">First turn</span><strong>${nm(G.first)}</strong></div></div>` : ''}</div>`
-        + foot(`<div class="meta">${nm(o)}: ${O.ready ? 'ready' : O.screen === 'battle' ? 'choosing roles' : 'still setting up their army'}</div>`, b(P.ready ? 'Waiting for opponent…' : 'Ready — start battle round 1','ready','btn', (!set || P.ready) ? 'disabled' : ''));
+        // one setup step: Ready toggles; scoring starts as soon as both players are ready
+        + foot(`<div class="meta">${nm(o)}: ${O.ready ? 'ready' : 'still setting up their army'}</div>`,
+            P.ready ? `<button type="button" class="btn readybtn" data-act="unready" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
+                    : b('Ready','ready','btn',`id="setupNext" aria-pressed="false" ${ok ? '' : 'disabled'}`));
       break; }
     case 'round': {
       const r = P.round - 1, waiting = P.roundDone, nextLbl = P.round < 5 ? `BR${P.round + 1}` : 'end-of-game scoring';
@@ -574,7 +563,7 @@ function playerView(i){
     case 'leave': h += sheet(`<h2>Leave this game?</h2><p>The session ends for both players and any spectators. Scores won’t be saved.</p>
         ${b('Leave match','confirmLeave','btn2 danger')}${b('Keep playing','closeSheet')}`); break;
     case 'opp': h += sheet(`<h2>${nm(o)}</h2><div class="meta">${status(O)}</div>
-        <p>${listInfo(O)}<br>${G.attacker === null ? '' : G.attacker === o ? 'Attacker' : 'Defender'}${G.first === o ? ' · first turn' : ''}</p>
+        <p>${listInfo(O)}</p>
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
         ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
@@ -679,11 +668,8 @@ function act(a, arg){
       if (G.host === null || G.host === i) { P.joinErr = 'No game is open yet. Switch to the other player and tap Host a game first.'; break; }
       G.connected = true; both('connected'); break;
     case 'addDet': P.detCount = Math.min(3, P.detCount + 1); break;
-    case 'confirm': P.confirmed = true; P.screen = 'battle'; break;   // each player moves on without waiting
-    case 'edit': P.confirmed = false; P.ready = false; P.screen = 'setup'; break;
-    case 'side': G.attacker = arg === 'att' ? i : o; G.players.forEach(p => p.ready = false); break;
-    case 'first': G.first = arg === 'me' ? i : o; G.players.forEach(p => p.ready = false); break;
-    case 'ready': P.ready = true; if (O.ready) both('round'); break;
+    case 'ready': if (!P.name.trim()) break; P.ready = true; if (O.ready) both('round'); break;
+    case 'unready': P.ready = false; break;
     case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
     case 'bump': {
       const [k, ds, rs] = arg.split(':'); const d = +ds; const r = rs ? +rs : P.round;
@@ -744,15 +730,16 @@ app.addEventListener('input', e => {
   if (e.target.type === 'checkbox') { P[f] = e.target.checked; render(); return; }
   P[f] = e.target.value;
   if (e.target.tagName === 'SELECT') { render(); return; }
+  if (f === 'name' && P.ready && !P.name.trim()) { P.ready = false; render(); return; }   // a name is required to stay ready
   const next = document.getElementById('setupNext');
   if (next) next.disabled = !P.name.trim();
 });
 document.querySelectorAll('[data-dev]').forEach(x => x.addEventListener('click', () => { dev = +x.dataset.dev; render(); }));
 document.getElementById('resetAll').addEventListener('click', () => { SEEN = [false, false]; newGame(); dev = 0; render(); });
-// dev shortcut: connected room, both lists confirmed, roles set, both players on BR1
+// dev shortcut: connected room, both players set up, both on BR1
 document.getElementById('skipSetup').addEventListener('click', () => {
   newGame();
-  Object.assign(G, { host:0, connected:true, attacker:0, first:0 });
+  Object.assign(G, { host:0, connected:true });
   [['Player 1','Space Marines'], ['Player 2','Necrons']].forEach(([name, army], k) => Object.assign(G.players[k], {
     name, army, det1:DETS[0], disp:DISPS[0], confirmed:true, ready:true, screen:'round' }));
   G.spectating = true;
