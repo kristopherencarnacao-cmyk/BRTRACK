@@ -412,6 +412,13 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .board:not(.solo) .meta{font-size:12px}
 }
 
+/* round button (Next round / End battle round / Finish game): double gap above it, narrower and centred.
+   The two-player "Ready — waiting" state keeps the full width so its longer label stays on one line */
+.deck>.btn,.deck>.btn2{margin-top:8px;width:72%;align-self:center}
+.deck>.readybtn{width:100%}
+@media (max-height:720px){.deck>.btn,.deck>.btn2{margin-top:6px}}
+@media (max-height:600px){.deck>.btn,.deck>.btn2{margin-top:4px}}
+
 /* CP tracker: 50% taller and in PhosphorDice's crit gold; the number is the hero, a small "CP" sits inline beside it */
 .cpbar{height:90px;--cp-line:rgba(245,196,81,.35)}
 .cpbar button{border-color:var(--cp-line);color:var(--gold);font-size:24px}
