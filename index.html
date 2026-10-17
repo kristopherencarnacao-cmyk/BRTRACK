@@ -181,7 +181,8 @@ const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, army:'
   confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
   sheet:null, editRound:null, last:null, joinErr:'', code:'', lefty:false });
 let G, dev = 0, wake = null;
-function newGame(){ G = { host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, players:[freshPlayer(), freshPlayer()] }; }
+function newGame(){ G = { host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, conceded:null, concedeRound:null, players:[freshPlayer(), freshPlayer()] }; }
+const CONCEDE_MS = 5000;
 newGame();
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -320,6 +321,7 @@ function playerView(i){
              ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
              ${waiting ? b(`Waiting for ${nm(o)} to end BR${P.round}…`,'noop','btn','disabled')
                        : b(`End battle round ${P.round}`,'sheet', O.roundDone ? 'btn' : 'btn2','data-arg="endRound"')}
+             ${b('Concede','sheet','btn2 danger','data-arg="concede"')}
              ${b(P.round < 5 ? `Force advance to BR${P.round + 1} (dev)` : 'Force advance to final scoring (dev)','forceAdvance','devbtn')}
            </div></div>`
         // CP lives in the pinned footer: the most-tapped control, always in thumb reach
@@ -341,12 +343,14 @@ function playerView(i){
       break;
     case 'results': {
       const both = O.done, me = total(P), them = total(O);
-      const outcome = !both ? 'Waiting for opponent' : me > them ? 'Victory' : me < them ? 'Defeat' : 'Draw';
+      const conceded = G.conceded !== null;
+      const outcome = conceded ? (G.conceded === i ? 'Defeat' : 'Victory') : !both ? 'Waiting for opponent' : me > them ? 'Victory' : me < them ? 'Defeat' : 'Draw';
       const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${roundPts(P, n-1)}</td><td>${roundPts(O, n-1)}</td></tr>`).join('')
         + `<tr><td>End of game</td><td>${P.postP + P.postS}</td><td>${O.postP + O.postS}</td></tr><tr><td>CP left</td><td>${P.cp}</td><td>${O.cp}</td></tr>`;
       h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">${outcome}</h2></div>
            <div class="scroll">
-           ${!both ? `<div class="banner"><span>Player ${o + 1} is still scoring. Their total updates live.</span></div>` : ''}
+           ${conceded ? `<div class="banner"><span>${G.conceded === i ? 'You' : nm(o)} conceded during battle round ${G.concedeRound}.</span></div>`
+             : !both ? `<div class="banner"><span>Player ${o + 1} is still scoring. Their total updates live.</span></div>` : ''}
            <div class="vs" style="text-align:center">
              <div class="card"><div class="lbl">${nm(i)}</div><div class="vp">${me}</div><p style="font-size:12px">${listInfo(P, true)}</p></div>
              <div class="card"><div class="lbl">${nm(o)}</div><div class="vp" style="color:var(--muted)">${them}</div><p style="font-size:12px">${listInfo(O, true)}</p></div></div>
@@ -396,6 +400,11 @@ function playerView(i){
           <div style="display:flex;justify-content:space-between"><span class="meta">Round total</span><strong>${signed(roundPts(P, r))}</strong></div></div>
         <p style="font-size:13px">${O.roundDone ? `${nm(o)} is ready, so ${next} starts as soon as you confirm.` : `Both players move to ${next} together, once ${nm(o)} ends BR${P.round} too.`} You can still fix this round later from the round track.</p>
         ${b('Cancel','closeSheet','btn2')}${b(`Yes, end battle round ${P.round}`,'endRound')}`); break; }
+    case 'concede': {
+      const left = Math.ceil((CONCEDE_MS - (Date.now() - P.concedeAt)) / 1000);
+      h += sheet(`<h2>Are you sure you want to concede?</h2>
+        <p>The game ends now for both players and ${nm(o)} wins. This can’t be undone.</p>
+        ${b('Cancel','closeSheet','btn2')}${b(left > 0 ? `Yes, concede (${left})` : 'Yes, concede','concede','btn', left > 0 ? 'disabled aria-live="polite"' : '')}`); break; }
     case 'edit': {
       const e = P.editRound - 1;
       h += sheet(`<h2>Fix battle round ${P.editRound}</h2>
@@ -421,7 +430,7 @@ function spectatorView(){
       <p style="font-size:13px">Primary ${sum(p.prim) + p.postP} · Secondary ${sum(p.sec) + p.postS} · CP ${p.cp}</p>
       <span><span class="tag">${status(p)}</span></span></div>`; };
   return (G.endedAt ? `<div class="timer"><span>Game over · this view closes in</span><b>${clock(remaining())}</b></div>` : '')
-    + `<div class="top"><div><div class="lbl">Spectating · read-only</div><h2>${!['post','results'].includes(P[0].screen) ? `Battle round ${br} of 5` : P[0].done && P[1].done ? 'Final score' : 'End-of-game scoring'}</h2></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="lbl">Join</div><div class="num" style="font-size:16px">${ROOM}</div></div><div class="ph" style="width:52px;height:52px">QR</div></div></div>
+    + `<div class="top"><div><div class="lbl">Spectating · read-only</div><h2>${G.conceded !== null ? `${nm(G.conceded)} conceded` : !['post','results'].includes(P[0].screen) ? `Battle round ${br} of 5` : P[0].done && P[1].done ? 'Final score' : 'End-of-game scoring'}</h2></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="lbl">Join</div><div class="num" style="font-size:16px">${ROOM}</div></div><div class="ph" style="width:52px;height:52px">QR</div></div></div>
        <div class="scroll"><div class="spec">${col(0)}${col(1)}</div>
        <div class="card" style="padding:6px 16px;overflow-x:auto"><table><thead><tr><th>Round</th>${[1,2,3,4,5].map(n => `<th>BR${n}</th>`).join('')}<th>End</th></tr></thead><tbody>
        ${[0,1].map(i => `<tr><td>${nm(i)}</td>${[0,1,2,3,4].map(n => `<td>${roundPts(P[i], n)}</td>`).join('')}<td>${P[i].postP + P[i].postS}</td></tr>`).join('')}</tbody></table></div>
@@ -459,7 +468,22 @@ function act(a, arg){
   const both = s => G.players.forEach(p => { p.screen = s; p.sheet = null; });
   switch (a){
     case 'go': P.screen = arg; P.sheet = null; break;
-    case 'sheet': P.sheet = arg; break;
+    case 'sheet':
+      P.sheet = arg;
+      if (arg === 'concede') {   // 5-second hold before Yes unlocks; re-draw each tick while the sheet is open
+        const at = P.concedeAt = Date.now();
+        const tick = setInterval(() => {
+          const open = G.players[i] === P && P.sheet === 'concede' && P.concedeAt === at;
+          if (open && dev === i) render();
+          if (!open || Date.now() - at >= CONCEDE_MS) clearInterval(tick);
+        }, 250);
+      }
+      break;
+    case 'concede':
+      if (Date.now() - P.concedeAt < CONCEDE_MS) break;
+      Object.assign(G, { conceded:i, concedeRound:P.round, restartReq:null, endedAt:Date.now() });
+      G.players.forEach(p => { p.done = true; p.roundDone = false; p.sheet = null; p.screen = 'results'; });
+      break;
     case 'closeSheet': P.sheet = null; P.editRound = null; break;
     case 'host': G.host = i; P.screen = 'host'; break;
     case 'cancelHost': G.host = null; P.screen = 'start'; break;
@@ -508,7 +532,7 @@ function act(a, arg){
     case 'agree': {
       const names = G.players.map(p => p.name), lefty = G.players.map(p => p.lefty);
       G.players = names.map((n, k) => Object.assign(freshPlayer(n), { screen:'setup', lefty:lefty[k] }));
-      Object.assign(G, { attacker:null, first:null, restartReq:null, endedAt:null }); break; }
+      Object.assign(G, { attacker:null, first:null, restartReq:null, endedAt:null, conceded:null, concedeRound:null }); break; }
     case 'decline': { const r = G.restartReq; G.restartReq = null; G.players[r].screen = 'declined'; break; }
     case 'back': P.screen = P.prev || 'round'; break;
     case 'confirmLeave': G.over = true; G.restartReq = null; G.players.forEach(p => { p.screen = 'expired'; p.sheet = null; }); break;
