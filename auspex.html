@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+/* base reset (matches the artifact host skeleton) */
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>ScoreHammer Auspex</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: phone frame with a pinned footer; info at the top (glance zone), frequent controls at the bottom (thumb zone). Spectator renders wide. */
+:root{
+  color-scheme:dark;
+  /* Auspex terminal palette (from PhosphorDice / Dominatus Codex) */
+  --bg:#05070a; --surface:#0e1217; --fill:#151a21; --ink:#dfe4ea; --muted:#8792a0;
+  --line:#1f5a45; --soft:#232b35; --accent:#55e6a5; --accent-soft:#0b231b; --on-ink:#02140d;
+  --scrim:rgba(1,6,4,.82); --danger:#e04652; --gold:#f5c451; --seal-hi:#8af5c4; --phos-deep:#2a9d6c;
+  --rgb:85,230,165; --glow:rgba(85,230,165,.45); --glow-soft:rgba(85,230,165,.18);
+  --term:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  --sans:var(--term); --mono:var(--term);
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 32px}
+*{box-sizing:border-box}
+/* stop double-tap-to-zoom on rapid taps (pinch zoom still works for accessibility) */
+html,body,*{touch-action:manipulation}
+button{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.shell{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.shell.wide{max-width:960px}
+/* dev-only controls: one compact row above the phone */
+.devbar{display:flex;align-items:center;justify-content:space-between;gap:6px;white-space:nowrap;overflow-x:auto}
+.devices,.devtools{display:flex;gap:4px}
+.devbar button{height:28px;padding:0 9px;border:1px solid var(--muted);background:var(--surface);color:var(--ink);border-radius:6px;font:600 11px var(--sans);cursor:pointer}
+.devices button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.devtools button{border-style:dashed;border-color:var(--accent);color:var(--accent);background:transparent}
+@media (max-width:360px){.devbar button{padding:0 6px}.devices,.devtools{gap:3px}}
+
+.phone{position:relative;border:1.5px solid var(--line);border-radius:22px;background:var(--bg);height:min(780px,calc(100dvh - 76px));min-height:600px;display:flex;flex-direction:column;overflow:hidden}
+.wide .phone{height:auto;min-height:560px}
+.top{padding:10px 12px 10px 16px;border-bottom:1.5px solid var(--line);background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:8px;flex:none}
+.lbl{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1,h2{margin:2px 0 0;font:700 22px/1.2 var(--sans);text-wrap:balance}
+.scroll{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.center{justify-content:center;align-items:center;text-align:center}
+.foot{flex:none;padding:12px 16px 16px;border-top:1.5px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:8px}
+p{margin:0;font:14px/1.45 var(--sans);color:var(--muted)}
+.btn,.btn2,.proto button{min-height:54px;width:100%;border-radius:12px;font:600 16px var(--sans);cursor:pointer;border:1.5px solid var(--line);padding:0 16px}
+.btn{background:var(--ink);color:var(--on-ink)}
+.btn:disabled{background:var(--soft);border-color:var(--soft);color:var(--muted);cursor:not-allowed}
+.btn2{background:transparent;color:var(--ink)}
+.danger{color:var(--danger);border-color:var(--danger)}
+.link{background:none;border:none;color:var(--accent);font:600 14px var(--sans);padding:10px 0;cursor:pointer;text-align:left;min-height:44px}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px}
+.ph{background:var(--fill);border:1.5px dashed var(--muted);border-radius:10px;display:flex;align-items:center;justify-content:center;font:600 12px var(--mono);letter-spacing:.06em;color:var(--muted)}
+.proto{border:1.5px dashed var(--accent);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;width:100%}
+.proto .lbl{color:var(--accent)}
+.proto button{min-height:44px;border-color:var(--accent);background:var(--surface);color:var(--accent);font-size:14px}
+.fld{display:flex;flex-direction:column;gap:6px;text-align:left}
+.fld label{font:500 13px var(--sans)}
+.opt-tag{font-weight:400;color:var(--muted)}
+.fld input,.fld select{height:50px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font:16px var(--sans);background:var(--surface);color:var(--ink);width:100%}
+.err{color:var(--ink);background:var(--fill);border-radius:8px;padding:10px 12px;font:500 13px var(--sans);text-align:left}
+.banner{border:1.5px dashed var(--line);border-radius:10px;padding:10px 12px;font:500 13px var(--sans);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.num{font:600 24px var(--mono);font-variant-numeric:tabular-nums}
+.icon{width:44px;height:44px;flex:none;border-radius:10px;border:none;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon:not(:disabled):hover,.icon:not(:disabled):active{background:var(--fill)}
+.top.tight{padding:4px 6px}
+
+/* segmented choice */
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.seg button{min-height:56px;border:none;background:transparent;color:var(--ink);font:600 15px var(--sans);cursor:pointer}
+.seg button+button{border-left:1.5px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+
+/* scoreboard: glance zone */
+.board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.side{padding:12px 14px;display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0;container-type:inline-size}
+button.side{border:none;border-left:1.5px solid var(--line);background:var(--fill);color:var(--ink);font:inherit;cursor:pointer}
+.vp{font:600 52px/1 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* big scores shrink with their card so three digits always fit */
+.vp{font-size:min(52px,46cqi)}
+.meta{font:500 13px var(--sans);color:var(--muted)}
+.trk{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.trk button{min-height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 13px var(--mono);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-variant-numeric:tabular-nums}
+.trk button.cur{background:var(--ink);color:var(--on-ink);cursor:default}
+.trk button:disabled{border-style:dashed;color:var(--muted);background:transparent;cursor:default}
+
+/* control deck: thumb zone */
+.deck{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.deck>.lbl{min-height:20px;display:flex;align-items:flex-end}
+.stp{display:flex;align-items:stretch;gap:8px;height:68px}
+.lefty .stp{flex-direction:row-reverse}
+.stp button{border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:600 26px var(--mono);cursor:pointer;flex:none}
+.stp .minus{width:56px}
+.stp .plus{width:84px;background:var(--ink);color:var(--on-ink);font-size:30px}
+.stp .mid{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 12px;gap:8px}
+.stp .mid>div:first-child{flex:1;line-height:1.15}
+.stp .mid .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums;flex:none}
+@media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
+.t-short{display:none}
+.readybtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--accent);border-color:var(--accent)}
+.readybtn .rb-main{display:flex;align-items:center;gap:6px}
+.readybtn .rb-sub{font:500 12px var(--sans);opacity:.85}
+.dg{width:min(260px,100%);height:auto;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dg .acc,.dg .acc *{stroke:var(--accent)}
+.dg .fill{fill:var(--ink)}
+.dg .acc .fill,.dg .acc.fill{fill:var(--accent)}
+.dg text{fill:var(--muted);stroke:none;font:600 12px var(--mono)}
+.dg text.sm{font-size:10px}
+.dg text.big{fill:var(--ink);font-size:14px}.dg text.huge{fill:var(--ink);font-size:24px}
+.dg text.dim{fill:var(--muted)}
+.dots{display:flex;gap:8px;justify-content:center}
+.dots span{width:8px;height:8px;border-radius:4px;background:var(--soft)}
+.dots span.on{width:22px;background:var(--ink)}
+.devbtn{min-height:36px;width:100%;border:1.5px dashed var(--accent);border-radius:10px;background:transparent;color:var(--accent);font:600 13px var(--sans);cursor:pointer}
+.cpbar{display:flex;align-items:stretch;gap:6px;height:60px}
+.lefty .cpbar{flex-direction:row-reverse}
+.cpbar button{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:600 20px var(--mono);cursor:pointer;padding:0}
+.cpbar button.add{background:var(--ink);color:var(--on-ink)}
+.cpmid{flex:none;width:72px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.cpmid .v{font:600 26px var(--mono);font-variant-numeric:tabular-nums;margin-top:2px}
+/* scoreboard stays pinned while the controls scroll on short phones */
+.scroll>.board{position:sticky;top:0;z-index:2;flex:none;box-shadow:0 -10px 0 var(--bg)}
+@media (max-height:760px){.vp{font-size:min(40px,40cqi)}.side{padding:8px 12px}.trk button{min-height:44px}.scr-b button{height:46px}.stp{height:60px}.scroll{gap:10px}}
+@media (max-width:360px){.scr-b{gap:4px}.scr-b button{font-size:13px}.scr-b button:nth-child(3){margin-right:4px}.lefty .scr-b button:nth-child(3){margin-left:4px}}
+@media (max-width:350px){.t-long{display:none}.t-short{display:inline}}
+.scr{border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:10px;display:flex;flex-direction:column;gap:8px}
+.scr-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 4px}
+.scr-h .v{font:600 30px var(--mono);font-variant-numeric:tabular-nums}
+.scr-b{display:flex;gap:6px}
+.lefty .scr-b{flex-direction:row-reverse}
+.scr-b button{flex:1;min-width:0;height:50px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:600 16px var(--mono);cursor:pointer;padding:0}
+.scr-b button.add{background:var(--ink);color:var(--on-ink)}
+.scr-b button:nth-child(3){margin-right:6px}
+.lefty .scr-b button:nth-child(3){margin-right:0;margin-left:6px}
+.icon:disabled{color:var(--soft);cursor:not-allowed}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.overlay{position:absolute;inset:0;background:var(--scrim);display:flex;flex-direction:column;justify-content:flex-end;z-index:10}
+.sheet{background:var(--surface);border-top:1.5px solid var(--line);border-radius:18px 18px 0 0;padding:10px 16px 16px;display:flex;flex-direction:column;gap:10px;max-height:90%;overflow-y:auto}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--soft);align-self:center;margin-bottom:4px}
+.sep{height:1px;background:var(--soft);margin:4px 0}
+table{width:100%;border-collapse:collapse;font:500 14px var(--mono);font-variant-numeric:tabular-nums}
+th,td{padding:8px 0;border-bottom:1px solid var(--soft);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vs .card{display:flex;flex-direction:column;gap:6px;min-width:0;container-type:inline-size}
+.tag{display:inline-block;border:1.5px solid var(--line);border-radius:6px;padding:2px 6px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.timer{background:var(--ink);color:var(--on-ink);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;font:500 14px var(--sans)}
+.timer b{font:600 20px var(--mono)}
+details{border:1.5px dashed var(--line);border-radius:10px;padding:0 12px}
+summary{min-height:46px;display:flex;align-items:center;font:600 14px var(--sans);cursor:pointer}
+details p{padding-bottom:12px}
+.toggle{display:flex;justify-content:space-between;align-items:center;min-height:54px;padding:0 4px;font:600 16px var(--sans)}
+.toggle input{width:26px;height:26px;accent-color:var(--ink)}
+/* spectator, wide */
+.spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.spec>.card{container-type:inline-size}
+.spec .vp{font-size:min(120px,46cqi)}
+@media (max-width:560px){.spec{gap:10px}.spec .card{padding:12px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+/* ===================== Auspex terminal skin ===================== */
+html{background:var(--bg)}
+body{background-color:var(--bg);background-image:radial-gradient(ellipse 110% 70% at 50% 0%,rgba(var(--rgb),.09),transparent 60%),radial-gradient(ellipse 120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%);letter-spacing:.01em}
+/* CRT scanlines, vignette and a slow sweep; never block input */
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(180deg,rgba(0,0,0,.2) 0 1px,transparent 1px 3px),radial-gradient(ellipse 120% 100% at 50% 50%,transparent 60%,rgba(0,0,0,.42) 100%)}
+body::before{content:"";position:fixed;left:0;right:0;top:-20%;height:20%;pointer-events:none;z-index:9998;background:linear-gradient(180deg,transparent,rgba(var(--rgb),.035),transparent);animation:sweep 7s linear infinite}
+@keyframes sweep{to{transform:translateY(600%)}}
+@keyframes blink{50%{opacity:0}}
+::selection{background:var(--accent);color:var(--on-ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:1px solid var(--accent);outline-offset:3px;box-shadow:0 0 0 3px var(--glow-soft)}
+
+/* corner-bracket frame, as on Codex panels */
+.card,.board,.scr,.cpmid,.sheet,.phone{--fr:var(--accent);--bk:10px;--bt:2px}
+.card,.board,.scr,.sheet{
+  background:
+    linear-gradient(var(--fr),var(--fr)) 0 0/var(--bk) var(--bt) no-repeat,linear-gradient(var(--fr),var(--fr)) 0 0/var(--bt) var(--bk) no-repeat,
+    linear-gradient(var(--fr),var(--fr)) 100% 0/var(--bk) var(--bt) no-repeat,linear-gradient(var(--fr),var(--fr)) 100% 0/var(--bt) var(--bk) no-repeat,
+    linear-gradient(var(--fr),var(--fr)) 0 100%/var(--bk) var(--bt) no-repeat,linear-gradient(var(--fr),var(--fr)) 0 100%/var(--bt) var(--bk) no-repeat,
+    linear-gradient(var(--fr),var(--fr)) 100% 100%/var(--bk) var(--bt) no-repeat,linear-gradient(var(--fr),var(--fr)) 100% 100%/var(--bt) var(--bk) no-repeat,
+    linear-gradient(180deg,rgba(var(--rgb),.035),transparent 40%),var(--surface);
+  border:1px solid var(--line);border-radius:0;box-shadow:inset 0 0 22px rgba(var(--rgb),.05),0 10px 26px rgba(0,0,0,.55)}
+.sheet{border-bottom:0;--bk:14px}
+.phone{border-color:var(--line);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(var(--rgb),.06)}
+.top,.foot{background:var(--surface);border-color:var(--line)}
+.top{border-bottom-style:solid}
+
+/* type: terminal readouts */
+h1{color:var(--accent);letter-spacing:.16em;text-transform:uppercase;text-shadow:0 0 12px var(--glow),0 0 2px rgba(var(--rgb),.8)}
+h1::after{content:"";display:inline-block;width:.5em;height:.82em;margin-left:.15em;background:var(--accent);vertical-align:-.06em;box-shadow:0 0 8px var(--glow);animation:blink 1.1s steps(1) infinite}
+h2{font-weight:700;letter-spacing:.03em}
+.top h2{text-transform:uppercase;letter-spacing:.08em;font-size:17px}
+.lbl{color:var(--muted)}
+.lbl::before{content:"// ";color:var(--line)}
+.meta,p{color:var(--muted)}
+.vp,.num,.big,.huge{font-variant-numeric:tabular-nums}
+.side:first-child .vp{color:var(--accent);text-shadow:0 0 12px var(--glow)}
+.side .vp{color:var(--ink)}
+
+/* buttons: square, phosphor-lit, bracketed labels */
+.btn,.btn2,.proto button,.opt,.seg,.seg button,.pill,.step,.icon,.devbar button,.trk button,.scr-b button,.cpbar button,.cpmid,.fld input,.fld select,.err,.banner,details,.ph,.toast button{border-radius:0!important}
+.btn,.btn2{text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;font-weight:700}
+@media (max-width:380px){.btn,.btn2{letter-spacing:.03em;font-size:12px}.btn::before,.btn2::before{content:"["}.btn::after,.btn2::after{content:"]"}}
+.btn::before,.btn2::before{content:"[ ";opacity:.55}.btn::after,.btn2::after{content:" ]";opacity:.55}
+.btn{background:var(--accent);border-color:var(--accent);color:var(--on-ink);box-shadow:0 0 14px var(--glow-soft)}
+.btn:hover:not(:disabled){background:var(--seal-hi);border-color:var(--seal-hi)}
+.btn:disabled{background:transparent;border-color:var(--line);color:var(--muted);box-shadow:none;opacity:.6}
+.btn2{background:transparent;border-color:var(--line);color:var(--accent)}
+.btn2:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 12px var(--glow-soft)}
+.btn2.danger,.danger{color:var(--danger);border-color:rgba(224,70,82,.55)}
+.btn2.danger:hover{background:rgba(224,70,82,.08);border-color:var(--danger);box-shadow:0 0 12px rgba(224,70,82,.3)}
+.link{color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-size:12.5px}
+.icon{color:var(--accent)}
+.icon:disabled{color:var(--soft)}
+.icon:not(:disabled):hover,.icon:not(:disabled):active{background:var(--accent-soft)}
+
+/* end-round ready state: gold "locked in" */
+.readybtn{background:var(--gold)!important;border-color:var(--gold)!important;color:#1a1200!important;box-shadow:0 0 14px rgba(245,196,81,.45)!important}
+.readybtn::before,.readybtn::after{content:none}
+
+/* round track */
+.trk button{background:transparent;border-color:var(--line);color:var(--accent);letter-spacing:.06em}
+.trk button.cur{background:var(--accent);border-color:var(--accent);color:var(--on-ink);box-shadow:0 0 12px var(--glow-soft)}
+.trk button:disabled{border-color:var(--soft);color:var(--muted);opacity:.7}
+
+/* scoreboard */
+.board{gap:0}
+button.side{background:rgba(var(--rgb),.03);border-left:1px dashed var(--line)}
+button.side:hover{background:var(--accent-soft)}
+
+/* scorers and CP */
+.scr-b button,.cpbar button{background:transparent;border-color:var(--line);color:var(--accent)}
+.scr-b button:hover,.cpbar button:hover{background:var(--accent-soft);border-color:var(--accent)}
+.scr-b button.add,.cpbar button.add{background:var(--accent);border-color:var(--accent);color:var(--on-ink);box-shadow:0 0 10px var(--glow-soft)}
+.scr-b button:active,.cpbar button:active{filter:brightness(1.3)}
+.scr-h .v,.cpmid .v{color:var(--accent);text-shadow:0 0 10px var(--glow)}
+.cpmid{background:var(--surface);border-color:var(--accent);box-shadow:inset 0 0 14px rgba(var(--rgb),.08)}
+.stp button{border-radius:0}
+
+/* setup: segmented roles, fields */
+.seg{border-color:var(--line);background:transparent}
+.seg button{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:13px}
+.seg button+button{border-left-color:var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-ink);box-shadow:0 0 12px var(--glow-soft)}
+.fld input,.fld select{background:var(--bg);border-color:var(--line);color:var(--ink);caret-color:var(--accent)}
+.fld input:focus{border-color:var(--accent)}
+.fld input::placeholder{color:var(--muted);opacity:.7}
+.opt-tag{color:var(--muted);text-transform:uppercase;font-size:10.5px;letter-spacing:.08em}
+details{border-color:var(--line)}
+summary{color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+.banner{border-color:var(--line);color:var(--ink);background:rgba(var(--rgb),.03)}
+.banner::before{content:"> ";color:var(--accent)}
+.err{background:rgba(224,70,82,.08);color:var(--ink);border:1px solid rgba(224,70,82,.5)}
+.ph{background:rgba(var(--rgb),.03);border-color:var(--line);color:var(--muted)}
+.toggle input{accent-color:var(--accent)}
+.sep{background:var(--line);opacity:.6}
+.grab{background:var(--line);border-radius:0}
+table th{color:var(--muted)}
+td,th{border-bottom-color:var(--soft)}
+.timer{background:var(--accent);color:var(--on-ink)}
+.tag{border-color:var(--line);color:var(--accent);border-radius:0}
+.dots span{background:var(--soft);border-radius:0}
+.dots span.on{background:var(--accent);box-shadow:0 0 8px var(--glow)}
+
+/* onboarding diagrams pick up the phosphor */
+.dg{stroke:var(--muted)}
+.dg .fill{fill:var(--muted)}
+.dg text.big,.dg text.huge{fill:var(--ink)}
+
+/* dev-only controls: neutral grey so they never read as app UI */
+.devbar button{background:transparent;border-color:var(--soft);color:var(--muted);font-family:var(--term);letter-spacing:.06em;text-transform:uppercase;font-size:10px}
+.devices button[aria-pressed="true"]{background:var(--muted);border-color:var(--muted);color:var(--bg)}
+.devtools button,.devbtn,.proto,.proto button{border-color:var(--muted)!important;color:var(--muted)!important;background:transparent!important}
+.proto .lbl{color:var(--muted)}
+.devbtn{text-transform:uppercase;letter-spacing:.08em;font-size:11px;border-radius:0}
+
+@media (prefers-reduced-motion:reduce){body::before,h1::after{animation:none}}
+/* monospace runs wider: let list details wrap and tighten headings on small phones */
+.card p,.vs p,.spec p{overflow-wrap:anywhere}
+@media (max-width:380px){.top h2{letter-spacing:0;font-size:14px!important}}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <div class="devbar" aria-label="Prototype controls">
+    <div class="devices" role="group" aria-label="Simulated device">
+      <button type="button" data-dev="0" aria-label="Player 1">P1</button>
+      <button type="button" data-dev="1" aria-label="Player 2">P2</button>
+      <button type="button" data-dev="2">Spectator</button>
+    </div>
+    <div class="devtools">
+      <button type="button" id="skipSetup">Skip to BR1</button>
+      <button type="button" id="resetAll">Reset</button>
+    </div>
+  </div>
+  <div class="phone" id="app"></div>
+</div>
+
+<script>
+const ROOM = 'K7Q-29';
+const ARMIES = ['Space Marines','Necrons','Orks','Aeldari','Tyranids','Astra Militarum','Chaos Space Marines',"T'au Empire"];
+const DETS = ['[Detachment A]','[Detachment B]','[Detachment C]'];
+const DISPS = ['[Disposition A]','[Disposition B]','[Disposition C]'];
+const TIMER_MS = 5 * 60 * 1000, TOAST_MS = 4000;
+const LABEL = { prim:'Primary', sec:'Secondary', cp:'Command points', postP:'End-game primary', postS:'End-game secondary' };
+const QR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM21 14v3M14 21h7"/></svg>';
+const MENU = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+
+const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, army:'', det1:'', det2:'', det3:'', detCount:1, disp:'',
+  confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
+  sheet:null, editRound:null, last:null, joinErr:'', code:'', lefty:false });
+let G, dev = 0, wake = null;
+var newGame = function(){ G = { host:null, connected:false, over:false, attacker:null, first:null, restartReq:null, endedAt:null, spectating:false, conceded:null, concedeRound:null, players:[freshPlayer(), freshPlayer()] }; }
+const CONCEDE_MS = 5000;
+let SEEN = [false, false];   // per device: has this player finished or skipped onboarding?
+const _newGame = newGame;
+newGame = function(){ _newGame(); G.players.forEach((p, k) => { if (!SEEN[k]) p.screen = 'onboard'; }); };
+newGame();
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sum = a => a.reduce((x, y) => x + y, 0);
+const total = p => sum(p.prim) + sum(p.sec) + p.postP + p.postS;
+const roundPts = (p, r) => p.prim[r] + p.sec[r];
+const nm = i => esc(G.players[i].name.trim() || `Player ${i + 1}`);
+const dets = p => [p.det1, p.det2, p.det3].map(x => x.trim()).filter(Boolean).join(' + ');
+// army details are optional: show only what was entered, else a quiet fallback
+const listInfo = (p, compact = false) => {
+  const army = p.army.trim(), disp = p.disp.trim();
+  const parts = compact ? [army, disp] : [[army, dets(p)].filter(Boolean).join(' · '), disp ? 'Disposition: ' + disp : ''];
+  const shown = parts.filter(Boolean).map(esc);
+  return shown.length ? shown.join('<br>') : 'No army details added';
+};
+const remaining = () => G.endedAt ? Math.max(0, TIMER_MS - (Date.now() - G.endedAt)) : TIMER_MS;
+const clock = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const signed = n => (n > 0 ? '+' : '') + n;
+function status(p){
+  if (['start','host','join','connected','setup'].includes(p.screen)) return 'Setting up army';
+  if (p.screen === 'battle') return p.ready ? 'Ready' : 'Choosing roles';
+  if (p.screen === 'post') return 'End-game scoring';
+  if (p.screen === 'results') return 'Finished';
+  return p.roundDone ? `Finished BR${p.round}` : `Scoring BR${p.round}`;
+}
+const opts = (list, val, empty) => `<option value="">${empty}</option>` + list.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('');
+const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+const BACK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+// header: optional back button (an action name), optional eyebrow, title, right-side icons
+const bar = (eyebrow, title, right = '', back = '') => `<div class="top"${back ? ' style="padding-left:6px"' : ''}><div style="display:flex;align-items:center;gap:4px;min-width:0">${back ? `<button type="button" class="icon" data-act="${back}" aria-label="Back">${BACK}</button>` : ''}<div style="min-width:0">${eyebrow ? `<div class="lbl">${eyebrow}</div>` : ''}<h2>${title}</h2></div></div>${right}</div>`;
+const foot = (...btns) => `<div class="foot">${btns.join('')}</div>`;
+const b = (label, act, cls = 'btn', extra = '') => `<button type="button" class="${cls}" data-act="${act}" ${extra}>${label}</button>`;
+const sheet = (inner, close = 'closeSheet') => `<div class="overlay" ${close ? `data-act="${close}"` : ''}><div class="sheet" data-stop role="dialog" aria-modal="true"><div class="grab"></div>${inner}</div></div>`;
+const UNDO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
+// undo: pass the player to show it; disabled when there is nothing this round to undo
+const undoBtn = P => { const L = P.history[P.history.length - 1];
+  return `<button type="button" class="icon" data-act="undo" ${L ? `aria-label="Undo ${LABEL[L.key]} ${signed(L.d)}" title="Undo ${LABEL[L.key]} ${signed(L.d)}"` : 'aria-label="Nothing to undo" disabled'}>${UNDO}</button>`; };
+const icons = (menu = true) => `<div style="display:flex;gap:2px"><button type="button" class="icon" data-act="sheet" data-arg="share" aria-label="Invite spectators">${QR}</button>${menu ? `<button type="button" class="icon" data-act="sheet" data-arg="menu" aria-label="Menu">${MENU}</button>` : ''}</div>`;
+// stepper: − small, + large; key:round lets one control target any round
+const stepper = (title, value, sub, key, r = '', short = title) => `<div class="stp">
+  <button type="button" class="minus" data-act="bump" data-arg="${key}:-1:${r}" aria-label="Remove one ${title}">−</button>
+  <div class="mid"><div style="min-width:0"><div style="font:600 15px var(--sans)"><span class="t-long">${title}</span><span class="t-short">${short}</span></div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div><div class="v">${value}</div></div>
+  <button type="button" class="plus" data-act="bump" data-arg="${key}:1:${r}" aria-label="Add one ${title}">+</button></div>`;
+
+// round track: past rounds open the fix-a-round sheet; on the post-game screen every round is fixable
+// BR1–5 then FS (final scoring). On the final scoring screen FS is current and every BR is fixable
+const track = (P, final = false) => `<div class="trk">${[1,2,3,4,5].map(n => (n === P.round && !final)
+  ? `<button type="button" class="cur" aria-current="step">BR${n}</button>`
+  : (n < P.round || final) ? `<button type="button" data-act="editRound" data-arg="${n}" aria-label="Fix battle round ${n}">BR${n}</button>`
+  : `<button type="button" disabled>BR${n}</button>`).join('')}${final
+  ? '<button type="button" class="cur" aria-current="step" aria-label="Final scoring">FS</button>'
+  : '<button type="button" disabled aria-label="Final scoring">FS</button>'}</div>`;
+
+// VP scorer: −10 −5 −1 | +1 +5 +10. Adds are filled so they read as the main action; order mirrors for left-handed use
+const scorer = (title, value, sub, key, r = '') => `<div class="scr">
+  <div class="scr-h"><div style="min-width:0"><div style="font:600 15px var(--sans)">${title}</div>${sub ? `<div class="meta" style="font-size:12px">${sub}</div>` : ''}</div><div class="v">${value}</div></div>
+  <div class="scr-b">${[-10,-5,-1,1,5,10].map(d => `<button type="button" class="${d > 0 ? 'add' : ''}" data-act="bump" data-arg="${key}:${d}:${r}" aria-label="${d > 0 ? 'Add' : 'Remove'} ${Math.abs(d)} ${title}">${d > 0 ? '+' + d : '−' + Math.abs(d)}</button>`).join('')}</div></div>`;
+
+// CP footer: −2 −1 [CP] +1 +2 with a narrow centered readout
+const cpBar = P => `<div class="cpbar">${[-2,-1].map(d => `<button type="button" data-act="bump" data-arg="cp:${d}:" aria-label="Remove ${-d} CP">−${-d}</button>`).join('')}
+  <div class="cpmid" role="status" aria-label="${P.cp} command points"><span class="lbl">CP</span><span class="v">${P.cp}</span></div>
+  ${[1,2].map(d => `<button type="button" class="add" data-act="bump" data-arg="cp:${d}:" aria-label="Add ${d} CP">+${d}</button>`).join('')}</div>`;
+
+const PHONE = (x, y, w = 56, h = 100) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/><line x1="${x + w/2 - 8}" y1="${y + 7}" x2="${x + w/2 + 8}" y2="${y + 7}"/>`;
+const SLIDES = [
+  { title:'Two phones, one game',
+    body:'Each player scores on their own phone. The host shows a QR code, and the opponent scans it to join.',
+    svg:`${PHONE(24,30)}${PHONE(160,30)}
+      <g class="acc"><rect x="36" y="52" width="32" height="32" rx="3"/><rect x="40" y="56" width="9" height="9"/><rect x="55" y="56" width="9" height="9"/><rect x="40" y="71" width="9" height="9"/><path d="M56 72h8v8h-8z"/>
+      <path d="M86 80 C 110 50, 130 50, 154 80" stroke-dasharray="5 5"/><path d="M146 74l8 6-9 4"/></g>
+      <text x="52" y="146" text-anchor="middle">Host</text><text x="188" y="146" text-anchor="middle">Opponent</text>` },
+  { title:'Score as you play',
+    body:'Tap to add primary, secondary and CP. Your opponent’s phone updates straight away.',
+    svg:`${PHONE(24,24,64,112)}${PHONE(152,24,64,112)}
+      <rect x="32" y="40" width="48" height="26" rx="4"/><text x="37" y="58" class="big">12</text><text x="68" y="58" class="big dim">9</text><line x1="56" y1="44" x2="56" y2="62"/>
+      <g class="acc"><rect x="32" y="100" width="14" height="14" rx="3" class="fill"/><rect x="49" y="100" width="14" height="14" rx="3" class="fill"/><rect x="66" y="100" width="14" height="14" rx="3" class="fill"/></g>
+      <line x1="32" y1="80" x2="80" y2="80"/><line x1="32" y1="88" x2="64" y2="88"/>
+      <rect x="160" y="40" width="48" height="26" rx="4"/><text x="165" y="58" class="big dim">9</text><line x1="184" y1="44" x2="184" y2="62"/><text x="189" y="58" class="big">12</text>
+      <g class="acc"><path d="M98 78h44" stroke-dasharray="5 5"/><path d="M134 72l8 6-8 6"/></g>` },
+  { title:'Rounds stay in sync',
+    body:'When your battle round is done, end it. You both move to the next round once each player has ended theirs.',
+    svg:`<text x="18" y="58">You</text><text x="18" y="108">Opp</text>
+      ${[0,1,2,3,4].map(k => `<circle cx="${70 + k*36}" cy="54" r="11" class="${k < 2 ? 'fill' : ''}"/><circle cx="${70 + k*36}" cy="104" r="11" class="${k < 2 ? 'fill' : ''}"/><text x="${70 + k*36}" y="140" text-anchor="middle" class="sm">BR${k+1}</text>`).join('')}
+      <g class="acc"><line x1="142" y1="30" x2="142" y2="124" stroke-dasharray="4 5"/><circle cx="142" cy="54" r="15"/><circle cx="142" cy="104" r="15"/></g>` },
+  { title:'Bring the crowd',
+    body:'Share the room code so anyone can follow the score live on a TV or tablet. Spectators can’t change scores.',
+    svg:`${PHONE(20,40,46,84)}<rect x="30" y="62" width="26" height="26" rx="2" class="acc"/>
+      <g class="acc"><path d="M76 82h28" stroke-dasharray="5 5"/><path d="M96 76l8 6-8 6"/></g>
+      <rect x="114" y="38" width="108" height="72" rx="6"/><line x1="152" y1="122" x2="184" y2="122"/><line x1="168" y1="110" x2="168" y2="122"/>
+      <text x="140" y="84" class="huge">12</text><text x="180" y="84" class="huge dim">9</text>` },
+];
+
+function playerView(i){
+  const P = G.players[i], o = 1 - i, O = G.players[o];
+  let h = '';
+  const undone = P.undone ? `<span class="sr" role="status">Undid ${LABEL[P.undone.key]} ${signed(P.undone.d)}</span>` : '';
+  const flash = (P.flash && Date.now() - P.flash.t < TOAST_MS) ? `<div class="banner" role="status" style="border-style:solid"><strong>${P.flash.text}</strong></div>` : '';
+  switch (P.screen){
+    case 'onboard': {
+      const k = P.obStep || 0, S = SLIDES[k], last = k === SLIDES.length - 1;
+      h = `<div class="top tight" style="justify-content:flex-end">${b('Skip','obDone','link','style="padding:0 12px;min-height:44px"')}</div>
+        <div class="scroll ob" style="justify-content:center;align-items:center;text-align:center;gap:18px">
+          <svg class="dg" viewBox="0 0 240 160" role="img" aria-label="${S.title} diagram">${S.svg}</svg>
+          <h2 style="font-size:24px">${S.title}</h2><p style="max-width:300px">${S.body}</p>
+          <div class="dots" aria-label="Step ${k + 1} of ${SLIDES.length}">${SLIDES.map((_, n) => `<span class="${n === k ? 'on' : ''}"></span>`).join('')}</div></div>`
+        + foot(`<div style="display:flex;gap:8px">${k ? b('Back','obBack','btn2','style="flex:1"') : ''}${b(last ? 'Get started' : 'Next', last ? 'obDone' : 'obNext','btn','style="flex:2"')}</div>`);
+      break; }
+    case 'start':
+      h = `<div class="scroll center"><div class="ph" style="width:88px;height:88px;border-radius:20px">LOGO</div><h1 style="font-size:30px">ScoreHammer</h1><p>Live 40K scoring, synced between both players.</p>${b('How it works','obReplay','link','style="text-align:center"')}</div>`
+        + foot(b('Host a game','host'), b('Join a game','join','btn2'));
+      break;
+    case 'host':
+      h = bar('','Have your opponent scan')
+        + `<div class="scroll center"><div class="ph" style="width:min(240px,70%);aspect-ratio:1;max-width:100%">QR CODE</div><div><div class="lbl">Room code</div><div class="num" style="letter-spacing:.12em;font-size:30px">${ROOM}</div></div>
+           <div class="banner" style="width:100%"><span>Waiting for opponent…</span></div>
+           <div class="proto"><div class="lbl">Prototype</div><p>Switch to Player ${o + 1} and tap Join a game.</p></div></div>`
+        + foot(b('Cancel','cancelHost','btn2'));
+      break;
+    case 'join':
+      h = bar('','Scan the host’s code')
+        + `<div class="scroll"><div class="ph" style="flex:1;min-height:180px">CAMERA VIEWFINDER</div>
+           <div class="proto"><div class="lbl">Prototype</div><button type="button" data-act="scan">Simulate scanning the QR</button></div>
+           <div class="fld"><label for="code${i}">Can’t scan? Enter the room code</label><input id="code${i}" data-field="code" value="${esc(P.code)}" placeholder="e.g. ${ROOM}" autocomplete="off" autocapitalize="characters"></div>
+           ${P.joinErr ? `<div class="err" role="alert">${P.joinErr}</div>` : ''}</div>`
+        + foot(b('Join with code','doJoin'), b('Cancel','go','btn2','data-arg="start"'));
+      break;
+    case 'connected':
+      h = `<div class="scroll center"><div style="width:76px;height:76px;border-radius:38px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></div>
+           <h2>Connected</h2><p>You’re linked with Player ${o + 1}’s device.</p></div>` + foot(b('Set up my army','go','btn','data-arg="setup"'));
+      break;
+    case 'setup': {
+      const ok = !!P.name.trim();
+      h = bar('Step 1 of 2','Your army', icons())
+        + `<div class="scroll">
+           <div class="fld"><label for="name${i}">Player name</label><input id="name${i}" data-field="name" value="${esc(P.name)}" placeholder="Your name" autocomplete="off"></div>
+           <div class="fld"><label for="army${i}">Army <span class="opt-tag">optional</span></label><input id="army${i}" data-field="army" value="${esc(P.army)}" placeholder="e.g. Space Marines" autocomplete="off"></div>
+           <div class="fld"><label for="d1${i}">Detachment <span class="opt-tag">optional</span></label><input id="d1${i}" data-field="det1" value="${esc(P.det1)}" placeholder="Detachment name" autocomplete="off"></div>
+           ${P.detCount > 1 ? `<div class="fld"><label for="d2${i}">Second detachment <span class="opt-tag">optional</span></label><input id="d2${i}" data-field="det2" value="${esc(P.det2)}" placeholder="Detachment name" autocomplete="off"></div>` : ''}
+           ${P.detCount > 2 ? `<div class="fld"><label for="d3${i}">Third detachment <span class="opt-tag">optional</span></label><input id="d3${i}" data-field="det3" value="${esc(P.det3)}" placeholder="Detachment name" autocomplete="off"></div>` : ''}
+           ${P.detCount < 3 ? `<button type="button" class="link" data-act="addDet">+ Add another detachment</button>` : ''}
+           <div class="fld"><label for="disp${i}">Disposition <span class="opt-tag">optional</span></label><input id="disp${i}" data-field="disp" value="${esc(P.disp)}" placeholder="Disposition name" autocomplete="off"></div></div>`
+        + foot(b('Continue','confirm','btn',`id="setupNext" ${ok ? '' : 'disabled'}`));
+      break; }
+    case 'battle': {
+      const set = G.attacker !== null && G.first !== null;
+      h = bar('Step 2 of 2','Roles and first turn', icons(), 'edit')
+        + `<div class="scroll">
+           <div class="fld"><span class="lbl">Attacker and defender</span><p style="font-size:13px">Each player rolls a D6. The highest roller decides who attacks. Pick your role:</p><div class="seg" role="group" aria-label="Your role"><button type="button" data-act="side" data-arg="att" aria-pressed="${G.attacker === i}">Attacker</button><button type="button" data-act="side" data-arg="def" aria-pressed="${G.attacker === o}">Defender</button></div></div>
+           <div class="fld"><span class="lbl">First turn</span><p style="font-size:13px">Each player rolls a D6. The highest roller must go first. Who won?</p><div class="seg" role="group" aria-label="First turn roll-off winner"><button type="button" data-act="first" data-arg="me" aria-pressed="${G.first === i}">I won</button><button type="button" data-act="first" data-arg="opp" aria-pressed="${G.first === o}">Opponent won</button></div></div>
+           <p style="font-size:12px">Either player can set these. Changes show on both devices.</p>
+           <details><summary>Deployment reminders</summary><p>[Mission-pack tips: deployment zones, alternating deployment, reserves, scout moves]</p></details>
+           ${set ? `<div class="card" style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
+             <div style="display:flex;justify-content:space-between"><span class="meta">Attacker</span><strong>${nm(G.attacker)}</strong></div>
+             <div style="display:flex;justify-content:space-between"><span class="meta">Defender</span><strong>${nm(1 - G.attacker)}</strong></div>
+             <div style="display:flex;justify-content:space-between"><span class="meta">First turn</span><strong>${nm(G.first)}</strong></div></div>` : ''}</div>`
+        + foot(`<div class="meta">${nm(o)}: ${O.ready ? 'ready' : O.screen === 'battle' ? 'choosing roles' : 'still setting up their army'}</div>`, b(P.ready ? 'Waiting for opponent…' : 'Ready — start battle round 1','ready','btn', (!set || P.ready) ? 'disabled' : ''));
+      break; }
+    case 'round': {
+      const r = P.round - 1, waiting = P.roundDone, nextLbl = P.round < 5 ? `BR${P.round + 1}` : 'end-of-game scoring';
+      const slot = flash
+        || (!waiting && O.roundDone ? `<div class="banner" role="status"><span>${nm(o)} is ready. Tap End battle round ${P.round} to start ${nextLbl}.</span></div>` : '');
+      // header holds actions only; the round track below is the visible round indicator
+      h = undone + `<div class="top tight">${undoBtn(P)}<h2 class="sr">Battle round ${P.round} of 5</h2>${icons()}</div>`
+        + `<div class="scroll">
+           ${track(P)}
+           <div class="board">
+             <div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
+             <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button>
+           </div>
+           <div class="deck">
+             ${slot}
+             ${scorer('Primary', P.prim[r], `Total ${sum(P.prim)}`, 'prim')}
+             ${scorer('Secondary', P.sec[r], `Total ${sum(P.sec)}`, 'sec')}
+             ${waiting
+               ? `<button type="button" class="btn readybtn" data-act="unendRound" aria-pressed="true"><span class="rb-main">${CHECK} Ready — waiting for ${nm(o)}</span><span class="rb-sub">Tap to undo</span></button>`
+               : b(`End battle round ${P.round}`,'endRound', O.roundDone ? 'btn' : 'btn2','aria-pressed="false"')}
+             ${b('Concede','sheet','btn2 danger','data-arg="concede"')}
+             ${b(P.round < 5 ? `Force advance to BR${P.round + 1} (dev)` : 'Force advance to final scoring (dev)','forceAdvance','devbtn')}
+           </div></div>`
+        // CP lives in the pinned footer: the most-tapped control, always in thumb reach
+        + foot(cpBar(P));
+      break; }
+    case 'post':
+      h = undone + `<div class="top tight"><div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1">${undoBtn(P)}<h2 style="font-size:clamp(16px,5vw,20px);white-space:nowrap;margin:0">Final scoring</h2></div>${icons()}</div>`
+        + `<div class="scroll">
+           ${track(P, true)}
+           <div class="board"><div class="side"><span class="lbl">You</span><span class="vp">${total(P)}</span><span class="meta">CP ${P.cp}</span></div>
+             <button type="button" class="side" data-act="sheet" data-arg="opp" aria-label="Opponent details"><span class="lbl">${nm(o)} ›</span><span class="vp" style="color:var(--muted)">${total(O)}</span><span class="meta">CP ${O.cp}</span></button></div>
+           <p>Add points scored at the end of the battle. Leave at 0 if none.</p>
+           <div class="deck">
+             ${flash}
+             ${scorer('Primary', P.postP, '', 'postP')}
+             ${scorer('Secondary', P.postS, '', 'postS')}
+           </div></div>`
+        + foot(b('Finish game','finish'));
+      break;
+    case 'results': {
+      const both = O.done, me = total(P), them = total(O);
+      const conceded = G.conceded !== null;
+      const outcome = conceded ? (G.conceded === i ? 'Defeat' : 'Victory') : !both ? 'Waiting for opponent' : me > them ? 'Victory' : me < them ? 'Defeat' : 'Draw';
+      const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${roundPts(P, n-1)}</td><td>${roundPts(O, n-1)}</td></tr>`).join('')
+        + `<tr><td>End of game</td><td>${P.postP + P.postS}</td><td>${O.postP + O.postS}</td></tr><tr><td>CP left</td><td>${P.cp}</td><td>${O.cp}</td></tr>`;
+      h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">${outcome}</h2></div>
+           <div class="scroll">
+           ${conceded ? `<div class="banner"><span>${G.conceded === i ? 'You' : nm(o)} conceded during battle round ${G.concedeRound}.</span></div>`
+             : !both ? `<div class="banner"><span>Player ${o + 1} is still scoring. Their total updates live.</span></div>` : ''}
+           <div class="vs" style="text-align:center">
+             <div class="card"><div class="lbl">${nm(i)}</div><div class="vp">${me}</div><p style="font-size:12px">${listInfo(P, true)}</p></div>
+             <div class="card"><div class="lbl">${nm(o)}</div><div class="vp" style="color:var(--muted)">${them}</div><p style="font-size:12px">${listInfo(O, true)}</p></div></div>
+           <div class="card" style="padding:6px 16px"><table><thead><tr><th>Round</th><th>You</th><th>Opp</th></tr></thead><tbody>${rows}</tbody></table></div>
+           ${G.endedAt ? `<p style="text-align:center;font-size:12px">Spectator view closes in ${clock(remaining())}</p>` : ''}</div>`
+        + foot(b('New game','newGame'));
+      break; }
+    case 'restartWait':
+      h = `<div class="scroll" style="justify-content:center"><h2>Waiting for Player ${o + 1} to agree to a restart</h2>
+           <p>Both players must agree. Scores and setup will be cleared.</p><div class="proto"><div class="lbl">Prototype</div><p>Switch to Player ${o + 1} to answer.</p></div></div>` + foot(b('Cancel request','cancelRestart','btn2'));
+      break;
+    case 'declined':
+      h = `<div class="scroll" style="justify-content:center"><h2>Your opponent declined the restart</h2>
+           <p>Continue the match, or leave. Leaving ends the session for both players.</p></div>` + foot(b('Leave match','confirmLeave','btn2 danger'), b('Continue match','back'));
+      break;
+    case 'expired':
+      h = `<div class="scroll center"><div class="ph" style="width:68px;height:68px;border-radius:34px">END</div><h2>Session ended</h2><p>This match is no longer active.</p></div>` + foot(b('Start a new game','newGame'));
+      break;
+  }
+
+  // sheets: everything secondary slides up from the bottom, so it opens and closes in the thumb zone
+  const r = P.round - 1;
+  switch (P.sheet){
+    case 'menu': h += sheet(`<div class="lbl">Menu</div>
+        ${b('Invite spectators','sheet','btn2','data-arg="share"')}
+        <label class="toggle" for="lefty${i}">Left-handed controls<input type="checkbox" id="lefty${i}" data-field="lefty" ${P.lefty ? 'checked' : ''}></label>
+        <div class="sep"></div>
+        ${b('Restart match…','restart','btn2')}
+        ${b('Leave match…','sheet','btn2 danger','data-arg="leave"')}
+        <div class="sep"></div>${b('Close','closeSheet')}`); break;
+    case 'share': h += sheet(`<div class="lbl">Invite spectators</div><div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+        <div class="ph" style="width:180px;height:180px">QR CODE</div><div><div class="lbl">Room code</div><div class="num" style="letter-spacing:.12em">${ROOM}</div></div>
+        <p>Or open [short link] on a TV, tablet or phone. Spectators can’t change scores.</p></div>${b('Done','closeSheet')}`); break;
+    case 'leave': h += sheet(`<h2>Leave this game?</h2><p>The session ends for both players and any spectators. Scores won’t be saved.</p>
+        ${b('Leave match','confirmLeave','btn2 danger')}${b('Keep playing','closeSheet')}`); break;
+    case 'opp': h += sheet(`<h2>${nm(o)}</h2><div class="meta">${status(O)}</div>
+        <p>${listInfo(O)}<br>${G.attacker === null ? '' : G.attacker === o ? 'Attacker' : 'Defender'}${G.first === o ? ' · first turn' : ''}</p>
+        <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
+        ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${O.prim[n-1]}</td><td>${O.sec[n-1]}</td></tr>`).join('')}
+        <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
+    case 'concede': {
+      const left = Math.ceil((CONCEDE_MS - (Date.now() - P.concedeAt)) / 1000);
+      h += sheet(`<h2>Are you sure you want to concede?</h2>
+        <p>The game ends now for both players and ${nm(o)} wins. This can’t be undone.</p>
+        ${b('Cancel','closeSheet','btn2')}${b(left > 0 ? `Yes, concede (${left})` : 'Yes, concede','concede','btn', left > 0 ? 'disabled aria-live="polite"' : '')}`); break; }
+    case 'edit': {
+      const e = P.editRound - 1;
+      h += sheet(`<h2>Fix battle round ${P.editRound}</h2>
+        <div class="deck" style="margin-top:0">${scorer('Primary', P.prim[e], '', 'prim', P.editRound)}${scorer('Secondary', P.sec[e], '', 'sec', P.editRound)}</div>
+        <p style="font-size:13px">Changes sync to your opponent straight away.</p>${b('Done','closeSheet')}`); break; }
+  }
+  if (G.restartReq === o && P.screen !== 'expired')
+    h += sheet(`<h2>${nm(o)} wants to restart the match</h2><p>All scores and setup will be cleared for both players.</p>${b('Decline','decline','btn2')}${b('Agree and restart','agree')}`, null);
+  return h;
+}
+
+function spectatorView(){
+  const ended = G.over || (G.endedAt && remaining() <= 0);
+  if (ended) return `<div class="scroll center"><div class="ph" style="width:68px;height:68px;border-radius:34px">END</div><h2>This session has expired</h2><p>The game has ended and this spectator link is no longer active.</p></div>`;
+  if (G.host === null) return `<div class="scroll center"><div class="ph" style="width:68px;height:68px;border-radius:34px">?</div><h2>Room not found</h2><p>Check the code, or ask the host to share a new QR code.</p>
+      <div class="proto" style="max-width:360px"><div class="lbl">Prototype</div><p>Host a game as Player 1 first, then come back.</p></div></div>`;
+  if (!G.spectating) return `<div class="scroll center"><div class="ph" style="width:min(320px,100%);height:180px">CAMERA VIEWFINDER</div><h2>Watch a game</h2><p>Scan the QR on a player’s device, or open their short link.</p><div style="width:min(360px,100%)">${b(`Join room ${ROOM}`,'spectate')}</div></div>`;
+  const P = G.players, br = P[0].round;
+  const col = i => { const p = P[i]; const roles = [G.attacker === null ? '' : G.attacker === i ? 'Attacker' : 'Defender', G.first === i ? 'First turn' : ''].filter(Boolean).join(' · ');
+    return `<div class="card" style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="lbl">${roles || 'Player ' + (i + 1)}</div><div style="font:700 20px var(--sans);overflow-wrap:anywhere">${nm(i)}</div>
+      <p style="font-size:13px">${listInfo(p)}</p>
+      <div class="vp">${total(p)}</div><div class="lbl">Victory points</div>
+      <p style="font-size:13px">Primary ${sum(p.prim) + p.postP} · Secondary ${sum(p.sec) + p.postS} · CP ${p.cp}</p>
+      <span><span class="tag">${status(p)}</span></span></div>`; };
+  return (G.endedAt ? `<div class="timer"><span>Game over · this view closes in</span><b>${clock(remaining())}</b></div>` : '')
+    + `<div class="top"><div><div class="lbl">Spectating · read-only</div><h2>${G.conceded !== null ? `${nm(G.conceded)} conceded` : !['post','results'].includes(P[0].screen) ? `Battle round ${br} of 5` : P[0].done && P[1].done ? 'Final score' : 'End-of-game scoring'}</h2></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="lbl">Join</div><div class="num" style="font-size:16px">${ROOM}</div></div><div class="ph" style="width:52px;height:52px">QR</div></div></div>
+       <div class="scroll"><div class="spec">${col(0)}${col(1)}</div>
+       <div class="card" style="padding:6px 16px;overflow-x:auto"><table><thead><tr><th>Round</th>${[1,2,3,4,5].map(n => `<th>BR${n}</th>`).join('')}<th>End</th></tr></thead><tbody>
+       ${[0,1].map(i => `<tr><td>${nm(i)}</td>${[0,1,2,3,4].map(n => `<td>${roundPts(P[i], n)}</td>`).join('')}<td>${P[i].postP + P[i].postS}</td></tr>`).join('')}</tbody></table></div>
+       ${G.endedAt ? `<div class="proto" style="max-width:360px"><div class="lbl">Prototype</div><button type="button" data-act="skipTimer">Skip the 5:00 timer</button></div>` : ''}</div>`;
+}
+
+const app = document.getElementById('app'), shell = document.getElementById('shell');
+let lastView = '';
+function render(){
+  document.querySelectorAll('[data-dev]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.dev === dev)));
+  shell.classList.toggle('wide', dev === 2);
+  const P = G.players[dev];
+  app.classList.toggle('lefty', !!(P && P.lefty));
+  // keep scroll position and focus when re-drawing the same screen, so taps never jump the view
+  const view = dev + ':' + (dev === 2 ? 'spec' : P.screen + ':' + (P.sheet || ''));
+  const same = view === lastView;
+  const scrollTop = same ? (app.querySelector('.scroll') || {}).scrollTop : 0;
+  const sheetTop = same ? (app.querySelector('.sheet') || {}).scrollTop : 0;
+  const pageY = window.scrollY;
+  const f = document.activeElement && app.contains(document.activeElement) ? document.activeElement : null;
+  const focusSel = same && f && f.dataset.act ? `[data-act="${f.dataset.act}"]${f.dataset.arg ? `[data-arg="${f.dataset.arg}"]` : ''}` : (same && f && f.id ? '#' + f.id : null);
+  app.innerHTML = dev === 2 ? spectatorView() : playerView(dev);
+  if (same) {
+    const sc = app.querySelector('.scroll'); if (sc && scrollTop) sc.scrollTop = scrollTop;
+    const sh = app.querySelector('.sheet'); if (sh && sheetTop) sh.scrollTop = sheetTop;
+    if (window.scrollY !== pageY) window.scrollTo(0, pageY);
+    if (focusSel) { const el = app.querySelector(focusSel); if (el && !el.disabled) el.focus({ preventScroll:true }); }
+  }
+  lastView = view;
+  if (P && P.screen === 'round' && !wake && navigator.wakeLock) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {});
+}
+
+function act(a, arg){
+  const i = dev, o = 1 - i, P = G.players[i], O = G.players[o];
+  const both = s => G.players.forEach(p => { p.screen = s; p.sheet = null; });
+  switch (a){
+    case 'go': P.screen = arg; P.sheet = null; break;
+    case 'obNext': P.obStep = Math.min(SLIDES.length - 1, (P.obStep || 0) + 1); break;
+    case 'obBack': P.obStep = Math.max(0, (P.obStep || 0) - 1); break;
+    case 'obDone': SEEN[i] = true; P.obStep = 0; P.screen = 'start'; break;
+    case 'obReplay': P.obStep = 0; P.screen = 'onboard'; break;
+    case 'sheet':
+      P.sheet = arg;
+      if (arg === 'concede') {   // 5-second hold before Yes unlocks; re-draw each tick while the sheet is open
+        const at = P.concedeAt = Date.now();
+        const tick = setInterval(() => {
+          const open = G.players[i] === P && P.sheet === 'concede' && P.concedeAt === at;
+          if (open && dev === i) render();
+          if (!open || Date.now() - at >= CONCEDE_MS) clearInterval(tick);
+        }, 250);
+      }
+      break;
+    case 'concede':
+      if (Date.now() - P.concedeAt < CONCEDE_MS) break;
+      Object.assign(G, { conceded:i, concedeRound:P.round, restartReq:null, endedAt:Date.now() });
+      G.players.forEach(p => { p.done = true; p.roundDone = false; p.sheet = null; p.screen = 'results'; });
+      break;
+    case 'closeSheet': P.sheet = null; P.editRound = null; break;
+    case 'host': G.host = i; P.screen = 'host'; break;
+    case 'cancelHost': G.host = null; P.screen = 'start'; break;
+    case 'join': P.screen = 'join'; P.joinErr = ''; break;
+    case 'doJoin': {
+      const code = P.code.replace(/[^a-z0-9]/gi, '').toUpperCase();
+      if (G.host === null || G.host === i) { P.joinErr = 'No game is open with that code. Ask your opponent to tap Host a game first.'; break; }
+      if (code !== ROOM.replace('-', '')) { P.joinErr = `That code doesn’t match an open room. Check the code on Player ${o + 1}’s screen.`; break; }
+      G.connected = true; both('connected'); break; }
+    case 'scan':
+      if (G.host === null || G.host === i) { P.joinErr = 'No game is open yet. Switch to the other player and tap Host a game first.'; break; }
+      G.connected = true; both('connected'); break;
+    case 'addDet': P.detCount = Math.min(3, P.detCount + 1); break;
+    case 'confirm': P.confirmed = true; P.screen = 'battle'; break;   // each player moves on without waiting
+    case 'edit': P.confirmed = false; P.ready = false; P.screen = 'setup'; break;
+    case 'side': G.attacker = arg === 'att' ? i : o; G.players.forEach(p => p.ready = false); break;
+    case 'first': G.first = arg === 'me' ? i : o; G.players.forEach(p => p.ready = false); break;
+    case 'ready': P.ready = true; if (O.ready) both('round'); break;
+    case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
+    case 'bump': {
+      const [k, ds, rs] = arg.split(':'); const d = +ds; const r = rs ? +rs : P.round;
+      let applied;   // the change actually made, after clamping at 0, so Undo reverses exactly that
+      if (Array.isArray(P[k])) { const before = P[k][r - 1]; P[k][r - 1] = Math.max(0, before + d); applied = P[k][r - 1] - before; }
+      else { const before = P[k]; P[k] = Math.max(0, before + d); applied = P[k] - before; }
+      if (!applied) break;
+      P.last = { key:k, d:applied, r: Array.isArray(P[k]) ? r : null, t:Date.now() };
+      P.history.push(P.last); if (P.history.length > 50) P.history.shift(); P.undone = null; break; }
+    case 'undo': {   // steps back one change at a time
+      const L = P.history.pop(); if (!L) break;
+      if (L.r) P[L.key][L.r - 1] = Math.max(0, P[L.key][L.r - 1] - L.d); else P[L.key] = Math.max(0, P[L.key] - L.d);
+      P.undone = L; P.last = null; break; }
+    case 'forceAdvance': O.roundDone = true;   // dev shortcut: mark the opponent ready, then end this player's round
+    // falls through
+    case 'endRound':
+      P.sheet = null; P.last = null; P.roundDone = true;
+      if (O.roundDone) G.players.forEach(p => {   // both done: advance together
+        p.roundDone = false; p.last = null; p.history = []; p.undone = null; if (p.sheet === 'endRound') p.sheet = null;
+        if (p.round < 5) { p.round++; p.flash = { text:`Battle round ${p.round} has started`, t:Date.now() }; }
+        else { p.screen = 'post'; p.flash = { text:'Both players finished BR5', t:Date.now() }; }
+      });
+      setTimeout(render, TOAST_MS + 50); break;
+    case 'unendRound': P.roundDone = false; break;
+    case 'finish': P.done = true; P.screen = 'results'; P.last = null; if (O.done) G.endedAt = Date.now(); break;
+    case 'restart': P.sheet = null; P.prev = P.screen; G.restartReq = i; P.screen = 'restartWait'; break;
+    case 'cancelRestart': G.restartReq = null; P.screen = P.prev; break;
+    case 'agree': {
+      const names = G.players.map(p => p.name), lefty = G.players.map(p => p.lefty);
+      G.players = names.map((n, k) => Object.assign(freshPlayer(n), { screen:'setup', lefty:lefty[k] }));
+      Object.assign(G, { attacker:null, first:null, restartReq:null, endedAt:null, conceded:null, concedeRound:null }); break; }
+    case 'decline': { const r = G.restartReq; G.restartReq = null; G.players[r].screen = 'declined'; break; }
+    case 'back': P.screen = P.prev || 'round'; break;
+    case 'confirmLeave': G.over = true; G.restartReq = null; G.players.forEach(p => { p.screen = 'expired'; p.sheet = null; }); break;
+    case 'newGame': newGame(); break;
+    case 'spectate': G.spectating = true; break;
+    case 'skipTimer': G.endedAt -= TIMER_MS; break;
+  }
+  render();
+}
+
+let swipeX = null;
+app.addEventListener('touchstart', e => { swipeX = e.target.closest('.ob') ? e.touches[0].clientX : null; }, { passive:true });
+app.addEventListener('touchend', e => {
+  if (swipeX === null) return; const dx = e.changedTouches[0].clientX - swipeX; swipeX = null;
+  if (Math.abs(dx) > 50) act(dx < 0 ? 'obNext' : 'obBack');
+});
+app.addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  const stop = e.target.closest('[data-stop]');
+  if (stop && (!btn || !stop.contains(btn))) return;
+  if (!btn || btn.disabled) return;
+  act(btn.dataset.act, btn.dataset.arg);
+});
+app.addEventListener('input', e => {
+  const f = e.target.dataset.field; if (!f || dev === 2) return;
+  const P = G.players[dev];
+  if (e.target.type === 'checkbox') { P[f] = e.target.checked; render(); return; }
+  P[f] = e.target.value;
+  if (e.target.tagName === 'SELECT') { render(); return; }
+  const next = document.getElementById('setupNext');
+  if (next) next.disabled = !P.name.trim();
+});
+document.querySelectorAll('[data-dev]').forEach(x => x.addEventListener('click', () => { dev = +x.dataset.dev; render(); }));
+document.getElementById('resetAll').addEventListener('click', () => { SEEN = [false, false]; newGame(); dev = 0; render(); });
+// dev shortcut: connected room, both lists confirmed, roles set, both players on BR1
+document.getElementById('skipSetup').addEventListener('click', () => {
+  newGame();
+  Object.assign(G, { host:0, connected:true, attacker:0, first:0 });
+  [['Player 1','Space Marines'], ['Player 2','Necrons']].forEach(([name, army], k) => Object.assign(G.players[k], {
+    name, army, det1:DETS[0], disp:DISPS[0], confirmed:true, ready:true, screen:'round' }));
+  G.spectating = true;
+  render();
+});
+setInterval(() => {
+  if (!G.endedAt) return;
+  if (dev === 2 || G.players[dev]?.screen === 'results') render();
+}, 1000);
+render();
+</script>
+</body>
+</html>

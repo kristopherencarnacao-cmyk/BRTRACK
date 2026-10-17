@@ -4,6 +4,11 @@ A functional wireframe prototype of **ScoreHammer**, a Warhammer 40K score-keepi
 
 This is a design prototype: a single HTML file with no build step and no backend. Both players and the spectator are simulated in one page, so you can play both sides of a game from one browser.
 
+## Versions
+
+- **`index.html`**: the wireframe prototype (light/dark, system fonts).
+- **`auspex.html`**: the same app restyled in the Auspex phosphor-terminal look shared with PhosphorDice and Dominatus Codex (cold black, phosphor green, monospace, bracketed panels, CRT scanlines). Both are kept in sync for visual design testing.
+
 ## Run it
 
 Open `index.html` in any modern browser. Nothing to install.
