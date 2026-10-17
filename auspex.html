@@ -108,15 +108,20 @@ button.side{border:none;border-left:1.5px solid var(--line);background:var(--fil
 @media (max-width:400px){.stp .minus{width:48px}.stp .plus{width:64px}.stp .mid{padding:0 10px}}
 .t-short{display:none}
 /* batch strip: bottom of the scoreboard, divided from the score by a light line */
-.bstrip{display:flex;align-items:flex-end;gap:12px;padding:6px 10px 8px 16px;border-top:1px solid var(--soft)}
+.bstrip{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:12px;padding:6px 10px 8px 16px;border-top:1px solid var(--soft)}
+.uplink{grid-column:1/-1;height:13px;font:700 10px/13px var(--mono);letter-spacing:.14em;color:var(--accent);white-space:nowrap;overflow:hidden}
+.uplink span{display:inline-block;animation:uplink 1.6s ease-in-out infinite}
+@keyframes uplink{0%,100%{opacity:.15}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.uplink span{animation:none;opacity:.8}}
 .board:not(.solo) .bstrip{grid-column:1/-1}
 .board{grid-template-rows:minmax(0,1fr) auto}   /* spare height goes to the score, never the strip */
-.bmeter{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
+.bmeter{min-width:0;display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
 .bsum{height:26px;font:700 26px/26px var(--mono);color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
 .bsum.neg{color:var(--danger)}
 .tbar{height:4px;border-radius:2px;overflow:hidden}
 .tbar.on{background:var(--soft)}
-.tbar i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:pdrain 3s linear both}
+.tbar i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:pfill 3s linear both}
+@keyframes pfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .seg4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .seg4 button{min-height:44px;font-size:13px}
 .pend{margin:-10px 6px -10px auto;padding:10px 6px;min-width:44px;border:0;background:transparent;color:var(--accent);font:700 18px/1 var(--mono);font-variant-numeric:tabular-nums;cursor:pointer}
@@ -327,6 +332,7 @@ td,th{border-bottom-color:var(--soft)}
 .bsum.neg{text-shadow:0 0 10px var(--red-glow)}
 .tbar{border-radius:0}.tbar.on{background:var(--tint-1)}
 .tbar i{box-shadow:0 0 8px var(--glow)}
+.uplink{text-shadow:0 0 8px var(--glow)}
 .bstrip .undo{margin-right:0}
 /* pending tally: a lit phosphor chip with a draining bar, like a charge meter (tints follow the theme accent) */
 .pend{color:var(--accent);text-shadow:0 0 8px var(--glow)}
@@ -599,7 +605,9 @@ const pendLeft = P => P && P.pend ? Math.max(0, P.pend.due - Date.now()) : 0;
 const vpPend = P => { const n = pendItems(P).reduce((a, it) => a + it.d, 0); return n ? ` <b class="vp-pend">${signed(n)}</b>` : ''; };
 // one countdown for the whole batch, at the bottom of the scoreboard: running total above the bar, Undo beside it
 const bstrip = P => { const n = pendItems(P).reduce((a, it) => a + it.d, 0), left = pendLeft(P);
-  return `<div class="bstrip"><div class="bmeter"><div class="bsum${n < 0 ? ' neg' : ''}" aria-live="polite">${n ? signed(n) : ''}</div>
+  // the uplink line pulses while a batch is pending; its fade is phase-locked to the clock so re-draws don't restart it
+  return `<div class="bstrip"><div class="uplink" aria-hidden="true">${P.pend ? `<span style="animation-delay:-${Date.now() % 1600}ms">++ ESTABLISHING UPLINK ++</span>` : ''}</div>
+    <div class="bmeter"><div class="bsum${n < 0 ? ' neg' : ''}" aria-live="polite">${n ? signed(n) : ''}</div>
     <div class="tbar${P.pend ? ' on' : ''}" aria-hidden="true">${P.pend ? `<i style="animation-duration:${BATCH_MS}ms;animation-delay:-${BATCH_MS - left}ms"></i>` : ''}</div></div>${undoBtn(P)}</div>`; };
 let VIEWP = null;   // the player whose screen is being drawn (scorer reads pending points from it)
 
