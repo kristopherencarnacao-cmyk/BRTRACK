@@ -419,19 +419,24 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
 .board.solo .side.sb{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;gap:6px 16px}
 .board.solo .sb-main{display:contents}
 .board.solo .sb-main>.lbl{grid-area:1/1/2/3}
-.board.solo .vp{grid-area:2/1;align-self:center;line-height:.9;position:relative;top:.07em}   /* digits sit high in their box; this centres the ink */
+/* the big score lives in its own size container, so it scales to the room beside the totals but never sets the board's height */
+.board.solo .vpbox{grid-area:2/1;container-type:size;min-width:0;min-height:0;display:flex;align-items:center}
+.board.solo .vp{line-height:.9;position:relative;top:.07em}   /* digits sit high in their box; this centres the ink */
 .board.solo .sb-aside{grid-area:2/2;align-self:center;display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .board.solo .stats{flex-direction:column;gap:2px;justify-content:flex-start}
 .board.solo .stat{flex-direction:row;align-items:baseline;justify-content:space-between;gap:14px;padding:4px 0;border-bottom:1px dashed var(--soft)}
 .board.solo .stat .big{font:700 28px/1 var(--mono);min-width:2ch;text-align:right}
 .board.solo .undo{align-self:flex-end}
 /* 16px of space on every side: the label sits 16px below the top edge (same as the sides), and the score never touches the strip divider.
-   Font size = board height minus the strip (51), label + gap (17) and padding (32), so the number always fits inside that padding */
+   The solo board is NOT a size container: it can never be shorter than its label + totals + strip, so nothing can spill into the strip.
+   Spare height still goes to the score row; the number fills its cell (height and width) */
 .board.solo .side.sb{padding:16px}
-.scroll>.board.solo .vp{font-size:clamp(34px,min(calc(100cqh - 100px),calc((100cqw - 150px) / 1.85)),160px)}
+.scroll>.board.solo{container-type:normal;grid-template-rows:minmax(min-content,1fr) auto;flex:1 0 auto}   /* grows into spare height, never shrinks below its contents */
+.scroll>.board.solo .vp{font-size:clamp(30px,min(calc(100cqh * 1.05),calc(100cqw / 1.9)),160px)}
+.scroll>.board.solo .vp.idle{font-size:clamp(30px,min(calc(100cqh * 1.05),calc(100cqw / 1.9)),64px)}   /* the empty "--" stays a modest placeholder */
 
 /* short screens (an iPhone SE or a phone browser with its toolbars): tighten the controls so a round fits without scrolling */
-@media (max-height:720px){
+@media (max-height:780px){
   .top.tight{min-height:44px}.brand{font-size:21px}
   .scroll{padding:10px 16px;gap:8px}
   .trk button{min-height:38px}
@@ -440,10 +445,11 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .scr-b button{height:42px}
   .deck .btn,.deck .btn2{min-height:44px}
   .foot{padding:8px 16px 10px}
-  .scroll>.board.solo{min-height:174px}   /* label + stacked totals + strip, with 16px clear above the divider */
+  .scroll>.board.solo{min-height:140px}
   .board.solo .stat .big{font-size:24px}
   .scroll>.board:not(.solo){min-height:140px}
 }
+@media (max-height:680px){.board.solo .stat{padding:2px 0}.board.solo .stat .big{font-size:22px}}   /* 360x640-class phones: totals a touch tighter so the round fits */
 @media (max-height:600px){
   .top.tight{min-height:40px}.brand{font-size:19px}
   .scroll{padding:8px 16px;gap:6px}
@@ -452,7 +458,7 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
   .scr-b button{height:38px;font-size:14px}
   .deck .btn,.deck .btn2{min-height:40px}
   .scroll{gap:4px}.deck{gap:4px}.trk button{min-height:32px}.scr-b button{height:36px}.foot{padding:6px 16px 8px}
-  .scroll>.board.solo{min-height:158px}   /* keeps the totals 16px clear of the divider when the page scrolls */
+  .scroll>.board.solo{min-height:124px}
   .board.solo .stat{padding:2px 0}.board.solo .stat .big{font-size:20px}.board.solo .sb-aside{gap:2px}.board.solo .undo{height:30px}
   .scroll>.board:not(.solo){min-height:128px}
   .board:not(.solo) .meta{font-size:12px}
@@ -462,7 +468,7 @@ body:not(.dev) .foot{border-top:1px dashed var(--line)}
    The two-player "Ready — waiting" state keeps the full width so its longer label stays on one line */
 .deck>.btn,.deck>.btn2{margin-top:8px;width:72%;align-self:center}
 .deck>.readybtn{width:100%}
-@media (max-height:720px){.deck>.btn,.deck>.btn2{margin-top:6px}}
+@media (max-height:780px){.deck>.btn,.deck>.btn2{margin-top:6px}}
 @media (max-height:600px){.deck>.btn,.deck>.btn2{margin-top:4px}}
 
 /* CP tracker: 50% taller and in PhosphorDice's gold (a deliberate exception to the crit-only gold rule; stays gold in every theme); the number is the hero, a small "CP" sits inline beside it */
@@ -791,7 +797,7 @@ const priTot = P => capSum(P.prim) + P.postP, secTot = P => capSum(P.sec) + P.po
 const idle = v => v === 0 ? '--' : v;   // spec: "--" is the empty/idle value
 const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${idle(v)}</span></div>`;
 // readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
-const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vp">${idle(total(P))}</span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>${bstrip(P)}</div>`;
+const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vpbox"><span class="vp${total(P) === 0 ? ' idle' : ''}">${idle(total(P))}</span></span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>${bstrip(P)}</div>`;
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
