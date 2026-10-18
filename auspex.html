@@ -587,6 +587,10 @@ html[data-accent="orange"]{--accent:#ff8f3f;--seal-hi:#ffbd8a;--phos-deep:#c25a1
 
 /* theme row: Optimatus checkbox sits under the swatches */
 .opt-row{padding:10px 0 2px;min-height:44px}
+.bf-row{border:1px solid var(--line);background:var(--surface);padding:12px 14px;min-height:56px;cursor:pointer}
+.bf-row>span{display:flex;flex-direction:column;gap:4px}
+.bf-row:has(input:checked){border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.bf-row input[type=checkbox]{flex:none}
 .opt-row>span{display:flex;flex-direction:column;gap:4px}
 .opt-sub{font:400 10px/1.3 var(--term);letter-spacing:.06em;color:var(--muted)}
 .sw:disabled{opacity:.3;cursor:not-allowed;transform:none}
@@ -664,7 +668,7 @@ const LABEL = { prim:'Primary', sec:'Secondary', cp:'Command points', postP:'End
 const QR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM21 14v3M14 21h7"/></svg>';
 const MENU = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 
-const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, maxRound:1, reachedFS:false, army:'', det1:'', det2:'', det3:'', detCount:1, disp:'',
+const freshPlayer = (name = '') => ({ screen:'start', prev:'round', name, maxRound:1, reachedFS:false, bf:true, army:'', det1:'', det2:'', det3:'', detCount:1, disp:'',
   confirmed:false, ready:false, round:1, roundDone:false, flash:null, history:[], undone:null, pend:null, prim:[0,0,0,0,0], sec:[0,0,0,0,0], postP:0, postS:0, cp:0, done:false,
   sheet:null, editRound:null, last:null, joinErr:'', code:'', lefty:false });
 let G, dev = 0, wake = null;
@@ -687,7 +691,11 @@ const GAME_CAP = 45;
 // what each of BR1-BR5 and then end-of-game scoring actually contributes for one score key ('prim' or 'sec'), after both caps
 const eff = (p, key) => { let left = GAME_CAP; return [...p[key].map(cap), key === 'prim' ? p.postP : p.postS].map(v => { const x = Math.min(v, left); left -= x; return x; }); };
 const priTot = P => sum(eff(P, 'prim')), secTot = P => sum(eff(P, 'sec'));
-const total = p => priTot(p) + secTot(p);
+// Battle-ready force: a tick box on the end-of-game screen, on by default. Worth 10 VP toward the total only (not Primary or Secondary),
+// and counted once the game reaches end-of-game scoring. Whatever is scored, a game total never goes above 100
+const BF_PTS = 10, MAX_TOTAL = 100;
+const bonus = p => p.reachedFS && p.bf !== false ? BF_PTS : 0;
+const total = p => Math.min(MAX_TOTAL, priTot(p) + secTot(p) + bonus(p));
 const roundPts = (p, r) => eff(p, 'prim')[r] + eff(p, 'sec')[r];
 const nm = i => esc(G.players[i].name.trim() || `Player ${i + 1}`);
 const dets = p => [p.det1, p.det2, p.det3].map(x => x.trim()).filter(Boolean).join(' + ');
@@ -908,13 +916,15 @@ function playerView(i){
              ${flash}
              ${scorer('Primary', P.postP, '', 'postP')}
              ${scorer('Secondary', P.postS, '', 'postS')}
+             <label class="m-item bf-row" for="bf"><span>Battle-ready force<span class="opt-sub">+${BF_PTS} VP · counts toward your total, not Primary or Secondary</span></span><input type="checkbox" id="bf" data-act="toggleBf" ${P.bf !== false ? 'checked' : ''}></label>
            </div></div>`
         + foot(b('Finish game','finish'));
       break;
     case 'results': {
       if (G.solo !== null) {   // single mode: your own breakdown only
         const eP = eff(P, 'prim'), eS = eff(P, 'sec');
-        const rows = [1,2,3,4,5,6].map(n => `<tr><td>${n < 6 ? 'BR' + n : 'End of game'}</td><td>${eP[n-1]}</td><td>${eS[n-1]}</td><td>${eP[n-1] + eS[n-1]}</td></tr>`).join('');
+        const rows = [1,2,3,4,5,6].map(n => `<tr><td>${n < 6 ? 'BR' + n : 'End of game'}</td><td>${eP[n-1]}</td><td>${eS[n-1]}</td><td>${eP[n-1] + eS[n-1]}</td></tr>`).join('')
+          + `<tr><td>Battle-ready force</td><td>–</td><td>–</td><td>${bonus(P)}</td></tr>`;
         h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">Final score</h2></div>
            <div class="scroll">
            ${soloBoard(P)}
@@ -926,7 +936,7 @@ function playerView(i){
       const conceded = G.conceded !== null;
       const outcome = conceded ? (G.conceded === i ? 'Defeat' : 'Victory') : !both ? 'Waiting for opponent' : me > them ? 'Victory' : me < them ? 'Defeat' : 'Draw';
       const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${roundPts(P, n-1)}</td><td>${roundPts(O, n-1)}</td></tr>`).join('')
-        + `<tr><td>End of game</td><td>${P.postP + P.postS}</td><td>${O.postP + O.postS}</td></tr><tr><td>CP left</td><td>${P.cp}</td><td>${O.cp}</td></tr>`;
+        + `<tr><td>End of game</td><td>${eff(P, 'prim')[5] + eff(P, 'sec')[5] + bonus(P)}</td><td>${eff(O, 'prim')[5] + eff(O, 'sec')[5] + bonus(O)}</td></tr><tr><td>CP left</td><td>${P.cp}</td><td>${O.cp}</td></tr>`;
       h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">${outcome}</h2></div>
            <div class="scroll">
            ${conceded ? `<div class="banner"><span>${G.conceded === i ? 'You' : nm(o)} conceded during battle round ${G.concedeRound}.</span></div>`
@@ -1004,13 +1014,13 @@ function spectatorView(){
     return `<div class="card" style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="lbl">${roles || 'Player ' + (i + 1)}</div><div style="font:700 20px var(--sans);overflow-wrap:anywhere">${nm(i)}</div>
       <p style="font-size:13px">${listInfo(p)}</p>
       <div class="vp">${total(p)}</div><div class="lbl">Victory points</div>
-      <p style="font-size:13px">Primary ${sum(p.prim) + p.postP} · Secondary ${sum(p.sec) + p.postS} · CP ${p.cp}</p>
+      <p style="font-size:13px">Primary ${priTot(p)} · Secondary ${secTot(p)} · CP ${p.cp}</p>
       <span><span class="tag">${status(p)}</span></span></div>`; };
   return (G.endedAt ? `<div class="timer"><span>Game over · this view closes in</span><b>${clock(remaining())}</b></div>` : '')
     + `<div class="top"><div><div class="lbl">Spectating · read-only</div><h2>${G.conceded !== null ? `${nm(G.conceded)} conceded` : !['post','results'].includes(P[0].screen) ? `Battle round ${br} of 5` : P[0].done && P[1].done ? 'Final score' : 'End-of-game scoring'}</h2></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="lbl">Join</div><div class="num" style="font-size:16px">${ROOM}</div></div><div class="ph" style="width:52px;height:52px">QR</div></div></div>
        <div class="scroll"><div class="spec">${col(0)}${col(1)}</div>
        <div class="card" style="padding:6px 16px;overflow-x:auto"><table><thead><tr><th>Round</th>${[1,2,3,4,5].map(n => `<th>BR${n}</th>`).join('')}<th>End</th></tr></thead><tbody>
-       ${[0,1].map(i => `<tr><td>${nm(i)}</td>${[0,1,2,3,4].map(n => `<td>${roundPts(P[i], n)}</td>`).join('')}<td>${eff(P[i], 'prim')[5] + eff(P[i], 'sec')[5]}</td></tr>`).join('')}</tbody></table></div>
+       ${[0,1].map(i => `<tr><td>${nm(i)}</td>${[0,1,2,3,4].map(n => `<td>${roundPts(P[i], n)}</td>`).join('')}<td>${eff(P[i], 'prim')[5] + eff(P[i], 'sec')[5] + bonus(P[i])}</td></tr>`).join('')}</tbody></table></div>
        ${G.endedAt ? `<div class="proto" style="max-width:360px"><div class="lbl">Prototype</div><button type="button" data-act="skipTimer">Skip the 5:00 timer</button></div>` : ''}</div>`;
 }
 
@@ -1099,6 +1109,7 @@ function act(a, arg){
     case 'unready': P.ready = false; break;
     case 'editRound': P.editRound = +arg; P.sheet = 'edit'; break;
     case 'commitNow': break;   // committed above
+    case 'toggleBf': P.bf = P.bf === false; break;   // Battle-ready force on/off
     case 'toggleOpt': {   // Optimatus: plain black-and-white palette, every effect off except the timers
       const on = !OPT(); document.documentElement.classList.toggle('opt', on);
       try { localStorage.setItem(OPT_KEY, on ? '1' : '0'); } catch (e) {} break; }
