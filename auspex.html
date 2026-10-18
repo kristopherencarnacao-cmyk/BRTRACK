@@ -353,6 +353,9 @@ td,th{border-bottom-color:var(--soft)}
 /* readout stats as in PhosphorDice: plain label over a lit number */
 .stat .lbl{font-size:10px;letter-spacing:.14em}
 .stat .lbl::before{content:none}
+.stat{position:relative}
+.stat.maxed{padding-top:15px!important}
+.stat .maxtag{position:absolute;left:0;top:3px;font-size:10px;letter-spacing:.14em}
 .stat .big{color:var(--ink);text-shadow:0 0 10px var(--ink-glow)}
 /* scoring rows sit back so the scoreboard VP stays the brightest thing on screen */
 .scr{--fr:var(--line);border-color:var(--soft);background-color:var(--surface);box-shadow:none;
@@ -673,8 +676,14 @@ const sum = a => a.reduce((x, y) => x + y, 0);
 // each battle round, Primary and Secondary count for at most 15 VP each. The panels still show everything tapped in;
 // only the capped amount reaches the scoreboard, totals and results. End-of-game scoring is not capped
 const CAP = 15, cap = v => Math.min(CAP, v), capSum = a => sum(a.map(cap));
-const total = p => capSum(p.prim) + capSum(p.sec) + p.postP + p.postS;
-const roundPts = (p, r) => cap(p.prim[r]) + cap(p.sec[r]);
+// on top of that, Primary and Secondary are each capped at 45 VP for the whole game (rounds + end-of-game scoring).
+// Points are counted in play order, so anything past 45 is simply dropped and never reaches the scoreboard, totals or results
+const GAME_CAP = 45;
+// what each of BR1-BR5 and then end-of-game scoring actually contributes for one score key ('prim' or 'sec'), after both caps
+const eff = (p, key) => { let left = GAME_CAP; return [...p[key].map(cap), key === 'prim' ? p.postP : p.postS].map(v => { const x = Math.min(v, left); left -= x; return x; }); };
+const priTot = P => sum(eff(P, 'prim')), secTot = P => sum(eff(P, 'sec'));
+const total = p => priTot(p) + secTot(p);
+const roundPts = (p, r) => eff(p, 'prim')[r] + eff(p, 'sec')[r];
 const nm = i => esc(G.players[i].name.trim() || `Player ${i + 1}`);
 const dets = p => [p.det1, p.det2, p.det3].map(x => x.trim()).filter(Boolean).join(' + ');
 // army details are optional: show only what was entered, else a quiet fallback
@@ -793,11 +802,10 @@ const SLIDES = [
 ];
 
 // single mode: one big personal scoreboard, no opponent
-const priTot = P => capSum(P.prim) + P.postP, secTot = P => capSum(P.sec) + P.postS;
 const idle = v => v === 0 ? '--' : v;   // spec: "--" is the empty/idle value
-const stat = (label, short, v) => `<div class="stat"><span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${idle(v)}</span></div>`;
+const stat = (label, short, v) => { const maxed = v >= GAME_CAP; return `<div class="stat${maxed ? ' maxed' : ''}">${maxed ? `<span class="maxtag">Max<span class="sr"> reached, extra ${label} points don't count</span></span>` : ''}<span class="lbl"><span class="t-long">${label}</span><span class="t-short">${short}</span></span><span class="big">${v}</span></div>`; };
 // readout like PhosphorDice: big VP on the left, label-over-number totals on the right. CP lives only in the footer bar
-const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vpbox"><span class="vp${total(P) === 0 ? ' idle' : ''}">${idle(total(P))}</span></span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>${bstrip(P)}</div>`;
+const soloBoard = P => `<div class="board solo"><div class="side sb"><div class="sb-main"><span class="lbl">Your score</span><span class="vpbox"><span class="vp">${total(P)}</span></span></div><div class="sb-aside"><div class="stats">${stat('Primary', 'Pri', priTot(P))}${stat('Secondary', 'Sec', secTot(P))}</div></div></div>${bstrip(P)}</div>`;
 
 function playerView(i){
   const P = G.players[i], o = 1 - i, O = G.players[o];
@@ -900,8 +908,8 @@ function playerView(i){
       break;
     case 'results': {
       if (G.solo !== null) {   // single mode: your own breakdown only
-        const rows = [1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${cap(P.prim[n-1])}</td><td>${cap(P.sec[n-1])}</td><td>${roundPts(P, n-1)}</td></tr>`).join('')
-          + `<tr><td>End of game</td><td>${P.postP}</td><td>${P.postS}</td><td>${P.postP + P.postS}</td></tr>`;
+        const eP = eff(P, 'prim'), eS = eff(P, 'sec');
+        const rows = [1,2,3,4,5,6].map(n => `<tr><td>${n < 6 ? 'BR' + n : 'End of game'}</td><td>${eP[n-1]}</td><td>${eS[n-1]}</td><td>${eP[n-1] + eS[n-1]}</td></tr>`).join('');
         h = `<div class="top" style="justify-content:center;text-align:center"><h2 style="font-size:28px">Final score</h2></div>
            <div class="scroll">
            ${soloBoard(P)}
@@ -950,7 +958,7 @@ function playerView(i){
     case 'opp': h += sheet(`<h2>${nm(o)}</h2><div class="meta">${status(O)}</div>
         <p>${listInfo(O)}</p>
         <table><thead><tr><th>Round</th><th>Primary</th><th>Secondary</th></tr></thead><tbody>
-        ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${cap(O.prim[n-1])}</td><td>${cap(O.sec[n-1])}</td></tr>`).join('')}
+        ${[1,2,3,4,5].map(n => `<tr><td>BR${n}</td><td>${eff(O, 'prim')[n-1]}</td><td>${eff(O, 'sec')[n-1]}</td></tr>`).join('')}
         <tr><td>Total VP</td><td colspan="2">${total(O)}</td></tr><tr><td>CP</td><td colspan="2">${O.cp}</td></tr></tbody></table>${b('Close','closeSheet')}`); break;
     case 'soloRestart': h += sheet(`<h2>Start over?</h2><p>All scores and CP are cleared and you go back to battle round 1.</p>
         ${b('Start over','soloRestart','btn2 danger')}${b('Keep scoring','closeSheet')}`); break;
@@ -997,7 +1005,7 @@ function spectatorView(){
     + `<div class="top"><div><div class="lbl">Spectating · read-only</div><h2>${G.conceded !== null ? `${nm(G.conceded)} conceded` : !['post','results'].includes(P[0].screen) ? `Battle round ${br} of 5` : P[0].done && P[1].done ? 'Final score' : 'End-of-game scoring'}</h2></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="lbl">Join</div><div class="num" style="font-size:16px">${ROOM}</div></div><div class="ph" style="width:52px;height:52px">QR</div></div></div>
        <div class="scroll"><div class="spec">${col(0)}${col(1)}</div>
        <div class="card" style="padding:6px 16px;overflow-x:auto"><table><thead><tr><th>Round</th>${[1,2,3,4,5].map(n => `<th>BR${n}</th>`).join('')}<th>End</th></tr></thead><tbody>
-       ${[0,1].map(i => `<tr><td>${nm(i)}</td>${[0,1,2,3,4].map(n => `<td>${roundPts(P[i], n)}</td>`).join('')}<td>${P[i].postP + P[i].postS}</td></tr>`).join('')}</tbody></table></div>
+       ${[0,1].map(i => `<tr><td>${nm(i)}</td>${[0,1,2,3,4].map(n => `<td>${roundPts(P[i], n)}</td>`).join('')}<td>${eff(P[i], 'prim')[5] + eff(P[i], 'sec')[5]}</td></tr>`).join('')}</tbody></table></div>
        ${G.endedAt ? `<div class="proto" style="max-width:360px"><div class="lbl">Prototype</div><button type="button" data-act="skipTimer">Skip the 5:00 timer</button></div>` : ''}</div>`;
 }
 
