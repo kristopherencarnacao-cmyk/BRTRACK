@@ -275,9 +275,14 @@ h2{font-weight:700;letter-spacing:.03em}
 .readybtn::before,.readybtn::after{content:none}
 
 /* round track */
-.trk button{background:transparent;border-color:var(--line);color:var(--accent);letter-spacing:.06em}
-.trk button.cur{background:var(--accent);border-color:var(--accent);color:var(--on-ink);box-shadow:0 0 12px var(--glow-soft)}
-.trk button:disabled{border-color:var(--soft);color:var(--muted);opacity:.7}
+/* styled like the Dominatus Codex tab bar: plain uppercase text on a hairline, the current tab gets an accent underline and glow.
+   Rounds you've reached stay tappable (muted text); rounds not reached yet are dimmed */
+.trk{display:flex;gap:0;border-bottom:1px solid var(--line)}
+.trk button{flex:1 1 0;flex-direction:row;gap:.6ch;min-width:0;padding:10px 0;margin-bottom:-1px;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font:600 11.5px var(--mono);font-variant-numeric:tabular-nums}
+.trk button.cur{background:none;border-bottom-color:var(--accent);color:var(--accent);text-shadow:0 0 8px rgba(var(--rgb),.5);box-shadow:none}
+.trk button:disabled{background:none;border-bottom-color:transparent;color:var(--muted);opacity:.4}
+.trk button:not(:disabled):not(.cur):hover,.trk button:not(:disabled):not(.cur):active{color:var(--accent)}
+@media (min-width:481px){.trk button{letter-spacing:.14em;font-size:12.5px}.trk button.cur::before{content:">"}}
 
 /* scoreboard */
 .board{gap:0}
@@ -382,7 +387,7 @@ body:not(.dev) .top{border-bottom:1px dashed var(--line)}
 body:not(.dev) .foot{border-top:1px dashed var(--line)}
 
 /* pressed: buttons fill with phosphor and the label goes dark, as in PhosphorDice */
-.btn2:active:not(:disabled),.trk button:active:not(:disabled):not(.cur),.scr-b button:active,.scr-b button.add:active,
+.btn2:active:not(:disabled),.scr-b button:active,.scr-b button.add:active,
 .cpbar button:active,.cpbar button.add:active,.stp button:active,.seg button:active,.icon:active:not(:disabled),button.side:active{
   background:var(--accent)!important;border-color:var(--accent)!important;color:var(--on-ink)!important;text-shadow:none!important;filter:none!important}
 .btn:active:not(:disabled){background:var(--accent);border-color:var(--accent);filter:brightness(1.15)}

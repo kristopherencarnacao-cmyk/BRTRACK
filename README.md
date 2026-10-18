@@ -51,6 +51,7 @@ Mapped from the user flow in [`docs/user-flow.jpeg`](docs/user-flow.jpeg):
 ## Design notes
 
 - Built for one-handed use at the table: information sits at the top for glancing, and the most-used controls sit at the bottom in thumb reach, with CP closest.
+- The BR1-BR5 / END round tabs use the same style as the Dominatus Codex tab bar: uppercase text on a hairline, with an accent underline and glow on the current tab (plus a `>` marker on wider screens). Reached rounds are muted but tappable; rounds not reached yet are dimmed.
 - Touch targets are 44px or larger; add buttons are larger and filled.
 - Destructive actions sit behind a divider and a confirmation sheet.
 - Works from 320px wide; big scores scale to fit their card.
